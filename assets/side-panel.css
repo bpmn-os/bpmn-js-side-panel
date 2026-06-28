@@ -1,0 +1,83 @@
+.bjs-side-panel {
+  display: flex;
+  flex-direction: row;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* left-edge resize handle: 10px grip (gray fill, triple-dash) + 1px gray right border;
+   the white canvas on the left gives the 3D look. Width is 10px + the 1px border. */
+.bjs-side-panel-resize-handle {
+  flex: 0 0 11px;
+  box-sizing: border-box;
+  cursor: col-resize;
+  background-color: #f8f8f8;
+  background-repeat: no-repeat;
+  background-position: left center;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='30'><path d='M2 0 v30 M5 0 v30 M8 0 v30' fill='none' stroke='black'/></svg>");
+  border-right: 1px solid #aaa;
+  user-select: none;
+}
+
+.bjs-side-panel-header {
+  flex: 0 0 auto;
+}
+
+.bjs-side-panel-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bjs-side-panel-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  border-bottom: 1px solid #ccc;
+}
+
+.bjs-side-panel-tab {
+  flex: 1;
+  padding: 8px 10px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font: inherit;
+  color: #555;
+  cursor: pointer;
+}
+
+.bjs-side-panel-tab:hover {
+  color: #000;
+}
+
+.bjs-side-panel-tab.active {
+  color: #000;
+  font-weight: bold;
+  border-bottom-color: var(--bjs-side-panel-accent, #52b415);
+}
+
+.bjs-side-panel-panes {
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.bjs-side-panel-pane {
+  display: none;
+  height: 100%;
+}
+
+.bjs-side-panel-pane.active {
+  display: block;
+}
+
+/* suppress text selection / show resize cursor while dragging the handle */
+body.bjs-side-panel-resizing {
+  cursor: col-resize;
+}
+
+body.bjs-side-panel-resizing * {
+  user-select: none !important;
+}

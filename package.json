@@ -1,0 +1,29 @@
+{
+  "name": "bpmn-js-side-panel",
+  "version": "0.1.0",
+  "description": "A resizable, tabbed side panel for bpmn-js / diagram-js. Hosts the properties panel when present, plus any number of custom tabs.",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "files": [
+    "src",
+    "assets"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "peerDependencies": {
+    "diagram-js": "*"
+  },
+  "keywords": [
+    "bpmn-js",
+    "diagram-js",
+    "side-panel",
+    "properties-panel"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bpmn-os/bpmn-js-side-panel.git"
+  }
+}

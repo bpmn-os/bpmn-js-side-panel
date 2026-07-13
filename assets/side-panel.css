@@ -1,8 +1,45 @@
+/* Shared chrome palette for the side panel and the modules hosted in it (its header, tabs, and tab
+   content such as the Issues panel). Declared at :root so tab-content modules can reference it with a
+   fallback — e.g. `color: var(--bjs-grey-55, hsl(225,10%,55%))` — and the whole panel re-themes from
+   one place. One grey ramp + a blue accent; override any of these on :root in the host to re-skin. */
+:root {
+  --bjs-grey-15: hsl(225, 10%, 15%);
+  --bjs-grey-35: hsl(225, 10%, 35%);
+  --bjs-grey-55: hsl(225, 10%, 55%);
+  --bjs-grey-75: hsl(225, 10%, 75%);
+  --bjs-grey-90: hsl(225, 10%, 90%);
+  --bjs-grey-95: hsl(225, 10%, 95%);
+  --bjs-grey-97: hsl(225, 10%, 97%);
+  --bjs-accent: hsl(205, 100%, 45%);
+  --bjs-accent-strong: hsl(205, 100%, 50%);
+}
+
+/* Two-pane layout. The module stamps `.bjs-layout` on the wrapper and `.bjs-side-panel-parent` on the
+   panel slot (see SidePanel._init), so the host writes no layout CSS. The canvas sibling grows; the
+   slot is a fixed-width flex item whose width the module manages (initial + drag-resize). Give the
+   wrapper (or an ancestor up to a sized root, e.g. body) a height so the canvas has one. */
+.bjs-layout {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+}
+
+.bjs-layout > .bjs-side-panel-parent {
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.bjs-layout > :not(.bjs-side-panel-parent) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .bjs-side-panel {
   display: flex;
   flex-direction: row;
   height: 100%;
   box-sizing: border-box;
+  background-color: #f8f8f8; /* the panel backdrop (matches the resize handle) */
 }
 
 /* left-edge resize handle: 10px grip (gray fill, triple-dash) + 1px gray right border;
@@ -21,6 +58,11 @@
 
 .bjs-side-panel-header {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background-color: var(--bjs-grey-97, hsl(225, 10%, 97%));
+  border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
 .bjs-side-panel-body {
@@ -34,7 +76,7 @@
 .bjs-side-panel-tabs {
   flex: 0 0 auto;
   display: flex;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
 .bjs-side-panel-tab {
@@ -44,18 +86,18 @@
   border: none;
   border-bottom: 2px solid transparent;
   font: inherit;
-  color: #555;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
   cursor: pointer;
 }
 
 .bjs-side-panel-tab:hover {
-  color: #000;
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
 }
 
 .bjs-side-panel-tab.active {
-  color: #000;
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
   font-weight: bold;
-  border-bottom-color: var(--bjs-side-panel-accent, #52b415);
+  border-bottom-color: var(--bjs-side-panel-accent, var(--bjs-accent-strong, hsl(205, 100%, 50%)));
 }
 
 .bjs-side-panel-panes {

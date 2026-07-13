@@ -3,12 +3,22 @@
 A resizable, tabbed side panel for [bpmn-js](https://github.com/bpmn-io/bpmn-js) /
 [diagram-js](https://github.com/bpmn-io/diagram-js).
 
-- Works **with or without** the properties panel — if a `propertiesPanel` service is present it
-  is hosted automatically as the first tab.
-- Holds **any number of tabs** (e.g. issues, simulation), added via a small API.
-- The panel is **resizable** via a left-edge drag handle; the canvas refits afterwards.
+- The panel is placed next to the canvas.
+- A properties panel, if present, is shown as the first tab.
+- Any number of tabs can be added.
+- The panel can be resized by dragging its left edge.
 
 ## Usage
+
+Wrap the canvas and a panel slot in a container (give the container — or an ancestor like `body` — a
+height):
+
+```html
+<div class="bpmn-ui">
+  <div class="canvas" id="canvas"></div>
+  <div class="side-panel" id="side-panel"></div>
+</div>
+```
 
 ```js
 import BpmnModeler from 'bpmn-js/lib/Modeler';
@@ -22,9 +32,10 @@ const modeler = new BpmnModeler({
     SidePanelModule
   ],
   sidePanel: {
-    parent: '#side-panel',   // selector or element; its width is resized
+    parent: '#side-panel',   // the panel slot (a flex sibling of the canvas)
     width: '300px',          // optional initial width
     minWidth: 180            // optional min width while resizing (px)
+    // header: '<img …>'      // optional content shown above the tabs
   }
 });
 
@@ -35,8 +46,10 @@ const issues = sidePanel.addTab({ id: 'issues', label: 'Issues', priority: 0 });
 issues.appendChild(/* ... */);
 ```
 
-If the properties panel module is registered, **do not** set its `parent` — the side panel
-attaches it into a "Properties" tab.
+The module mounts into the `parent` slot and stamps the layout classes (`.bjs-layout` on the wrapper,
+`.bjs-side-panel-parent` on the slot) so `side-panel.css` arranges the two panes. If the properties
+panel module is registered, **do not** set its `parent` — the side panel attaches it into a
+"Properties" tab.
 
 ## API (`modeler.get('sidePanel')`)
 

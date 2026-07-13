@@ -1,19 +1,26 @@
 /**
  * A resizable, tabbed side panel.
  *
- * - Builds a tab bar + panes inside the configured `parent`.
- * - If a `propertiesPanel` service is present, hosts it automatically as the first tab.
- * - Lets consumers add any number of tabs via `addTab()`.
- * - The panel is resizable via a left-edge drag handle; after a resize the canvas is
- *   notified (`canvas.resized()`) so the diagram refits.
+ * Required structure. The wrapper holds the canvas and the panel slot.
+ *
+ *     <div class="bpmn-ui">
+ *       <div class="canvas" id="canvas"></div>
+ *       <div class="side-panel" id="side-panel"></div>
+ *     </div>
+ *
+ * On init the module mounts into the `parent` slot and adds `.bjs-layout` to the wrapper and
+ * `.bjs-side-panel-parent` to the slot. side-panel.css uses those to make the wrapper a flex row, grow
+ * the canvas, and fix the panel width. The panel width (initial and drag-resize) is set here.
+ *
+ * - A `propertiesPanel` service, if present, is added as the first tab.
+ * - Further tabs are added via `addTab()`.
+ * - A left-edge drag handle resizes the panel. `canvas.resized()` fires afterward.
  *
  * Config (`sidePanel`):
- *   - parent:   selector or element the panel is mounted into and whose width is resized.
- *   - header:   optional content (HTML string or element) for a header/logo slot shown above
- *               the tabs and spanning the body, with the resize handle running full height
- *               alongside it.
- *   - width:    initial width (CSS value, default '300px').
- *   - minWidth: minimum width in px while resizing (default 180).
+ *   - parent:   selector or element for the panel slot (a flex sibling of the canvas in the wrapper).
+ *   - header:   optional content (HTML string or element) shown above the tabs.
+ *   - width:    initial panel width (CSS value, default '300px').
+ *   - minWidth: minimum width in px during resize (default 180).
  */
 export default class SidePanel {
   constructor(config, injector, eventBus, canvas) {
@@ -34,9 +41,14 @@ export default class SidePanel {
       return;
     }
 
-    if (this._config.width) {
-      parent.style.width = this._config.width;
+    // Stamp the layout classes so side-panel.css can arrange the two panes: the wrapper (the slot's
+    // parent) becomes the flex row, the slot is fixed-width, and the canvas sibling grows.
+    const layout = this._layout = parent.parentNode;
+    if (layout) {
+      layout.classList.add('bjs-layout');
     }
+    parent.classList.add('bjs-side-panel-parent');
+    parent.style.width = this._config.width || '300px';
 
     const container = this._container = el('div', 'bjs-side-panel');
 
@@ -79,6 +91,12 @@ export default class SidePanel {
   _destroy() {
     if (this._container && this._container.parentNode) {
       this._container.parentNode.removeChild(this._container);
+    }
+    if (this._parent) {
+      this._parent.classList.remove('bjs-side-panel-parent');
+    }
+    if (this._layout) {
+      this._layout.classList.remove('bjs-layout');
     }
   }
 

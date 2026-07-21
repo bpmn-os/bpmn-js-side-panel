@@ -12,6 +12,10 @@
   --bjs-grey-97: hsl(225, 10%, 97%);
   --bjs-accent: hsl(205, 100%, 45%);
   --bjs-accent-strong: hsl(205, 100%, 50%);
+  /* Horizontal inset for collapsible-entry content (title + body), owned by the side panel so every
+     tab lines up. Consumers align their own non-entry content (e.g. a group/id label) to this token
+     rather than setting their own container padding. */
+  --bjs-collapsible-entry-inset: 12px;
 }
 
 /* Two-pane layout. The module stamps `.bjs-layout` on the wrapper and `.bjs-side-panel-parent` on the
@@ -122,4 +126,123 @@ body.bjs-side-panel-resizing {
 
 body.bjs-side-panel-resizing * {
   user-select: none !important;
+}
+
+/* Collapsible entry — a component of the side panel's own design system. Its look mimics
+   @bpmn-io/properties-panel's collapsible entry for visual consistency next to a Properties tab, but
+   uses our own `bjs-collapsible-*` classes and `--bjs-*` tokens (declared at :root above) — no
+   `bio-properties-panel-*` names, no dependency on properties-panel.css. Every rule is class-scoped
+   so nothing leaks into a hosted properties panel attached inside a pane. */
+.bjs-collapsible-entry {
+  font-size: 13px;
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
+  /* Left inset owned here, not by the consumer: the caret still reaches the right edge (padding-left
+     doesn't touch it), while the title/body start at the shared inset. Nested entries indent naturally. */
+  padding-left: var(--bjs-collapsible-entry-inset, 12px);
+}
+
+/* space between adjacent entries */
+.bjs-collapsible-entry + .bjs-collapsible-entry {
+  margin-top: 5px;
+}
+
+/* the row: summary fills, controls + disclosure caret sit to its right (bpmn-workbench layout) */
+.bjs-collapsible-entry-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 26px;
+  /* The caret's ~4px gap from the panel edge is owned here, not by the consumer: this padding-right is
+     the side panel's job so any tab hosting these entries lines up identically. Matches the content
+     body's inset (.bjs-collapsible-entry-entries) so the caret and the entries share one right edge. */
+  padding: 2px 4px 2px 0;
+  line-height: 1.4;
+  user-select: none;
+}
+
+.bjs-collapsible-entry-expandable > .bjs-collapsible-entry-header {
+  cursor: pointer;
+}
+
+.bjs-collapsible-entry-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bjs-collapsible-entry-title.bjs-empty {
+  color: var(--bjs-grey-55, hsl(225, 10%, 55%));
+  font-style: italic;
+}
+
+.bjs-collapsible-entry-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+/* right-aligned disclosure caret: 22px circular hover target, rotates 90° when open */
+.bjs-collapsible-entry-arrow {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  background: none;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+/* circular highlight when hovering the caret, like the properties panel. A touch darker than a
+   row/group hover so the circle stays visible even when the surrounding row is highlighted. */
+.bjs-collapsible-entry-arrow:hover {
+  background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
+.bjs-collapsible-entry.bjs-open > .bjs-collapsible-entry-header > .bjs-collapsible-entry-arrow {
+  transform: rotate(90deg);
+}
+
+/* controls (remove, and later reorder) are revealed on hover/focus, matching properties-panel feel */
+.bjs-collapsible-entry-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  background: none;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  cursor: pointer;
+  visibility: hidden;
+}
+
+.bjs-collapsible-entry-header:hover .bjs-collapsible-entry-remove,
+.bjs-collapsible-entry-header:focus-within .bjs-collapsible-entry-remove {
+  visibility: visible;
+}
+
+.bjs-collapsible-entry-remove:hover {
+  background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
+/* expanded body: hidden until open. No indent / side-line for now (can be added back for nesting).
+   The right inset matches the caret's optical gap (see the header's 4px padding-right) so the content
+   lines up with the caret rather than reaching past it. */
+.bjs-collapsible-entry-entries {
+  display: none;
+  padding-right: 4px;
+}
+
+.bjs-collapsible-entry.bjs-open > .bjs-collapsible-entry-entries {
+  display: block;
 }

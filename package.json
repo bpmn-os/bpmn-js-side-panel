@@ -25,5 +25,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/bpmn-os/bpmn-js-side-panel.git"
+  },
+  "devDependencies": {
+    "bpmn-js": "^18.21.0",
+    "linkedom": "^0.18.13"
   }
 }

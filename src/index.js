@@ -1,5 +1,7 @@
 import SidePanel from './SidePanel.js';
 
+export { default as createCollapsibleEntry } from './CollapsibleEntry.js';
+
 /**
  * diagram-js module providing a resizable, tabbed side panel.
  *

@@ -1,3 +1,5 @@
+import { el, makeClickable } from './entryUtil.js';
+
 /**
  * Plain-DOM collapsible entry — the first entry-component of the side panel's own UI toolkit.
  *
@@ -20,6 +22,8 @@
  * @param {string} [options.id]              stamped as data-entry-id (stable identity for updates)
  * @param {string|Node} [options.label]      collapsed summary content, string or element
  * @param {boolean} [options.open=false]     initial open state (ignored when not expandable)
+ * @param {'left'|'right'} [options.caretSide='right'] disclosure-caret placement, mirroring
+ *        properties-panel: top-level groups put it on the right, nested entries on the left
  * @param {boolean} [options.expandable=true] false → a plain row with no arrow and no content body
  * @param {Function} [options.remove]        when given, renders a hover-revealed remove control
  * @param {string} [options.emptyLabel='<empty>'] placeholder shown when `label` is empty
@@ -41,13 +45,16 @@ export default function createCollapsibleEntry(options = {}) {
     id,
     label,
     open = false,
+    caretSide = 'right',
     expandable = true,
     remove,
     onToggle,
+    onClick,
     emptyLabel = '<empty>'
   } = options;
 
-  const element = el('div', 'bjs-collapsible-entry');
+  const element = el('div', 'bjs-entry bjs-collapsible-entry');
+  makeClickable(element, onClick); // whole-entry click (Issues-style), when onClick is given
   if (expandable) {
     element.classList.add('bjs-collapsible-entry-expandable');
   }
@@ -78,12 +85,17 @@ export default function createCollapsibleEntry(options = {}) {
     controlsEl.appendChild(removeBtn);
   }
 
-  // disclosure caret on the right (expandable entries only), rotates when open
+  // disclosure caret (expandable entries only), rotates when open. Placement mirrors properties-panel:
+  // top-level groups on the right (default); nested entries on the left, where the caret is pinned
+  // absolutely (see .bjs-caret-left CSS) so DOM order is irrelevant — the class alone drives it.
   if (expandable) {
     const arrow = el('button', 'bjs-collapsible-entry-arrow');
     arrow.type = 'button';
     arrow.setAttribute('aria-label', 'Toggle');
     arrow.innerHTML = ARROW_SVG;
+    if (caretSide === 'left') {
+      element.classList.add('bjs-caret-left');
+    }
     header.appendChild(arrow);
   }
 
@@ -155,9 +167,3 @@ const REMOVE_SVG =
   '<path d="M6 2.5h4M3 4.5h10M5 4.5v8a1 1 0 001 1h4a1 1 0 001-1v-8M6.5 6.5v5M9.5 6.5v5" ' +
   'fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" ' +
   'stroke-linejoin="round"/></svg>';
-
-function el(tag, className) {
-  const node = document.createElement(tag);
-  node.className = className;
-  return node;
-}

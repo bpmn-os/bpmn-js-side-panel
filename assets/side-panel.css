@@ -12,10 +12,11 @@
   --bjs-grey-97: hsl(225, 10%, 97%);
   --bjs-accent: hsl(205, 100%, 45%);
   --bjs-accent-strong: hsl(205, 100%, 50%);
-  /* Horizontal inset for collapsible-entry content (title + body), owned by the side panel so every
-     tab lines up. Consumers align their own non-entry content (e.g. a group/id label) to this token
-     rather than setting their own container padding. */
-  --bjs-collapsible-entry-inset: 12px;
+  /* Horizontal inset for entry content (a collapsible title/body, or a plain entry), owned by the side
+     panel so every entry in every tab lines up. Entries themselves are FULL-WIDTH — this inset is applied
+     inside them (header + body) — so hosts never need negative-margin breakouts and full-width dividers
+     and backgrounds are trivial. Consumers align their own content to this token, not a container padding. */
+  --bjs-entry-inset: 12px;
 }
 
 /* Two-pane layout. The module stamps `.bjs-layout` on the wrapper and `.bjs-side-panel-parent` on the
@@ -106,17 +107,31 @@
 
 .bjs-side-panel-panes {
   flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden; /* the active pane's body scrolls, not this container */
+}
+
+/* a pane is a scrolling body above a fixed footer — both owned by the side panel, both holding a
+   sequence of entries + separators */
+.bjs-side-panel-pane {
+  display: none;
+  height: 100%;
+  flex-direction: column;
+}
+
+.bjs-side-panel-pane.active {
+  display: flex;
+}
+
+.bjs-side-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
 }
 
-.bjs-side-panel-pane {
-  display: none;
-  height: 100%;
-}
-
-.bjs-side-panel-pane.active {
-  display: block;
+.bjs-side-panel-footer {
+  flex: 0 0 auto;
 }
 
 /* suppress text selection / show resize cursor while dragging the handle */
@@ -136,15 +151,12 @@ body.bjs-side-panel-resizing * {
 .bjs-collapsible-entry {
   font-size: 13px;
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
-  /* Left inset owned here, not by the consumer: the caret still reaches the right edge (padding-left
-     doesn't touch it), while the title/body start at the shared inset. Nested entries indent naturally. */
-  padding-left: var(--bjs-collapsible-entry-inset, 12px);
 }
 
-/* space between adjacent entries */
-.bjs-collapsible-entry + .bjs-collapsible-entry {
-  margin-top: 5px;
-}
+/* Every entry (collapsible or plain) is FULL-WIDTH; its horizontal inset lives inside (header + body),
+   so hosts never need negative-margin breakouts and full-width separators/backgrounds are trivial.
+   Entries stack flush; division between them is an explicit `.bjs-separator` the consumer places, so
+   entries can also sit directly next to each other with no separation when that is wanted. */
 
 /* the row: summary fills, controls + disclosure caret sit to its right (bpmn-workbench layout) */
 .bjs-collapsible-entry-header {
@@ -152,10 +164,9 @@ body.bjs-side-panel-resizing * {
   align-items: center;
   gap: 4px;
   min-height: 26px;
-  /* The caret's ~4px gap from the panel edge is owned here, not by the consumer: this padding-right is
-     the side panel's job so any tab hosting these entries lines up identically. Matches the content
-     body's inset (.bjs-collapsible-entry-entries) so the caret and the entries share one right edge. */
-  padding: 2px 4px 2px 0;
+  /* Internal inset: the title starts at the shared inset; the caret keeps its own 4px gap from the right
+     edge. Both are owned here (not by the consumer) so every entry in every tab lines up identically. */
+  padding: 2px 4px 2px var(--bjs-entry-inset, 12px);
   line-height: 1.4;
   user-select: none;
 }
@@ -210,6 +221,29 @@ body.bjs-side-panel-resizing * {
   transform: rotate(90deg);
 }
 
+/* caret-left (nested-style): the caret is pinned absolutely at the entry's left edge (taking no flex
+   space), the title clears it, and the body drops its left inset so embedded content — e.g. a table
+   grid — keeps full width. The entry itself stays full-width like every entry (inset is internal). */
+.bjs-collapsible-entry.bjs-caret-left > .bjs-collapsible-entry-header {
+  position: relative;
+  padding-left: 24px;
+}
+
+.bjs-collapsible-entry.bjs-caret-left > .bjs-collapsible-entry-header > .bjs-collapsible-entry-arrow {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.bjs-collapsible-entry.bjs-caret-left.bjs-open > .bjs-collapsible-entry-header > .bjs-collapsible-entry-arrow {
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.bjs-collapsible-entry.bjs-caret-left > .bjs-collapsible-entry-entries {
+  padding-left: 0;
+}
+
 /* controls (remove, and later reorder) are revealed on hover/focus, matching properties-panel feel */
 .bjs-collapsible-entry-remove {
   display: flex;
@@ -235,14 +269,265 @@ body.bjs-side-panel-resizing * {
   background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
-/* expanded body: hidden until open. No indent / side-line for now (can be added back for nesting).
-   The right inset matches the caret's optical gap (see the header's 4px padding-right) so the content
-   lines up with the caret rather than reaching past it. */
+/* expanded body: hidden until open. Its left inset matches the header (title); the right inset matches
+   the caret's optical gap (the header's 4px padding-right). caret-left drops the left inset above. */
 .bjs-collapsible-entry-entries {
   display: none;
-  padding-right: 4px;
+  /* 10px bottom padding gives the expanded body breathing room above whatever follows */
+  padding: 0 4px 10px var(--bjs-entry-inset, 12px);
 }
 
 .bjs-collapsible-entry.bjs-open > .bjs-collapsible-entry-entries {
   display: block;
+}
+
+/* clickable entry (onClick given, like an Issues row): whole entry is a pointer with a hover highlight */
+.bjs-entry.bjs-entry-clickable {
+  cursor: pointer;
+}
+
+.bjs-entry.bjs-entry-clickable:hover {
+  background: var(--bjs-grey-95, hsl(225, 10%, 95%));
+}
+
+.bjs-entry.bjs-entry-clickable:focus-visible {
+  outline: 1px solid var(--bjs-accent, hsl(205, 100%, 45%));
+  outline-offset: -1px;
+}
+
+/* Plain entry — a full-width, internally-inset container for non-collapsible content (the consumer fills
+   it). Same inset as a collapsible title/body so plain and collapsible entries line up. */
+.bjs-plain-entry {
+  font-size: 13px;
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
+  padding: 6px var(--bjs-entry-inset, 12px);
+}
+
+/* Separator — an explicit full-width divider the consumer places between entries. Full width is trivial
+   because entries are full-width (no breakout). */
+.bjs-separator {
+  height: 0;
+  border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+}
+
+/* Table entry — a fixed-header editable grid (createTableEntry). Styled to @bpmn-io/properties-panel:
+   thin grey rules, the properties-panel input/hover greys, the blue accent on the focused cell, and the
+   same plus / trash controls (revealed on row hover, like the properties-panel list entries). */
+.bjs-table-entry {
+  font-size: 13px;
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
+  --bjs-table-row-h: 27px;         /* fixed header/row height, so the beside-table delete column lines up */
+  --bjs-table-actions-w: 22px;     /* width of the beside-table delete column */
+  --bjs-table-gap: 2px;            /* gap between the table and the delete column */
+  --bjs-table-max-height: none;    /* configurable cap: set (e.g. 240px) to scroll rows under a fixed header */
+}
+
+/* the data table and the delete column sit side by side; the delete column is OUTSIDE the table (no
+   border, no header cell). The TABLE owns the scrollbar — vertical scroll caps at --bjs-table-max-height
+   with a pinned header, and the delete column scrolls in sync (JS) so its trash icons stay row-aligned. */
+.bjs-table-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bjs-table-gap);
+}
+
+.bjs-table-scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;    /* border box; the header + body inside own the scrolling */
+  border: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+  border-radius: 2px;
+}
+
+/* the header sits above the scrolling body; it never scrolls vertically (so no scrollbar reaches over it)
+   and its horizontal scroll is mirrored from the body (JS) so the columns stay aligned. */
+.bjs-table-headscroll {
+  overflow: hidden;
+}
+
+/* the body scrolls both ways: vertically (rows, capped at --bjs-table-max-height) with the scrollbar
+   sitting BELOW the header, and horizontally (columns wider than the panel). */
+.bjs-table-bodyscroll {
+  max-height: var(--bjs-table-max-height, none);
+  overflow: auto;
+  scrollbar-color: var(--bjs-accent, hsl(205, 100%, 45%)) transparent;
+}
+
+.bjs-table-bodyscroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.bjs-table-bodyscroll::-webkit-scrollbar-thumb {
+  background: var(--bjs-accent, hsl(205, 100%, 45%));
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.bjs-table-bodyscroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* header and body are separate tables; table-layout:fixed + a shared min-width (--bjs-table-min-width,
+   set from the column count) keeps their equal columns aligned AND makes the table scroll horizontally
+   when the panel is narrower than the minimum, rather than cramping the columns. */
+.bjs-table {
+  width: 100%;
+  min-width: var(--bjs-table-min-width, 0);
+  border-collapse: separate;
+  border-spacing: 0;
+  font: inherit;
+  table-layout: fixed;
+}
+
+.bjs-table th,
+.bjs-table td {
+  box-sizing: border-box;
+  height: var(--bjs-table-row-h);
+  border-bottom: 1px solid var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
+.bjs-table th {
+  padding: 0 6px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  background: var(--bjs-grey-95, hsl(225, 10%, 95%));
+  border-bottom-color: var(--bjs-grey-75, hsl(225, 10%, 75%));
+  /* column separator, a touch darker than the header fill so it reads against it */
+  border-right: 1px solid var(--bjs-grey-85, hsl(225, 10%, 85%));
+}
+
+.bjs-table td {
+  padding: 0;
+  border-right: 1px solid var(--bjs-grey-95, hsl(225, 10%, 95%));
+}
+
+.bjs-table th:last-child,
+.bjs-table td:last-child {
+  border-right: none;
+}
+
+.bjs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.bjs-table-cell {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  min-width: 90px;
+  padding: 0 6px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+}
+
+.bjs-table-cell:focus {
+  outline: 1px solid var(--bjs-accent, hsl(205, 100%, 45%));
+  outline-offset: -1px;
+  background: #fff;
+}
+
+/* delete column beside the table: a spacer matching the header, then one control per row at the same
+   fixed height so they line up with the rows; each shows an always-visible trash icon */
+.bjs-table-rowactions {
+  flex: 0 0 var(--bjs-table-actions-w);
+  width: var(--bjs-table-actions-w);
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid transparent; /* mirror the table box's 1px top border so the rows line up */
+}
+
+/* fixed spacer aligned with the header — no trash, no background of its own */
+.bjs-table-rowactions-head {
+  height: var(--bjs-table-row-h);
+}
+
+/* the trash icons scroll here, in lock-step with the table body (JS mirrors scrollTop); own scrollbar hidden */
+.bjs-table-rowactions-body {
+  max-height: var(--bjs-table-max-height, none);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.bjs-table-rowactions-body::-webkit-scrollbar { display: none; }
+
+.bjs-table-rowaction {
+  height: var(--bjs-table-row-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bjs-table-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px; /* circular hover highlight, like the properties-panel controls */
+  background: none;
+  color: var(--bjs-grey-55, hsl(225, 10%, 55%));
+  cursor: pointer;
+}
+
+.bjs-table-delete:hover {
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
+  background: var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
+/* footer row: add-row (plus) on the left, a right-aligned actions slot (e.g. download) */
+.bjs-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+/* when a delete column is present, reserve its width on the right so the footer spans exactly the table:
+   the add (left) sits under the table's left edge and the download (right) under its right edge */
+.bjs-table-entry:has(.bjs-table-rowactions) .bjs-table-footer {
+  margin-right: calc(var(--bjs-table-actions-w) + var(--bjs-table-gap));
+}
+
+.bjs-table-footer-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* footer buttons: icon-only, with a circular hover highlight — the properties-panel control style. The
+   label lives in the button's tooltip (title). Consumer buttons in the actions slot inherit this. */
+.bjs-table-add,
+.bjs-table-footer-actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  background: none;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  cursor: pointer;
+}
+
+.bjs-table-add:hover,
+.bjs-table-footer-actions > button:hover {
+  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
+  background: var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
+.bjs-table-add svg,
+.bjs-table-footer-actions > button svg {
+  width: 16px;
+  height: 16px;
 }

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>side-panel · entries (review demo)</title>
+  <!-- provides the --bjs-* tokens (at :root) + the entry + table styles -->
+  <link rel="stylesheet" href="../assets/side-panel.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: hsl(225, 10%, 90%);
+      color: hsl(225, 10%, 15%);
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      padding: 24px;
+    }
+    /* stand in for a side-panel PANE (a tab body): entries are full-width, so the pane has NO horizontal
+       padding — the inset lives inside each entry. */
+    .pane {
+      width: 280px;   /* deliberately narrow, to show wide tables scroll horizontally */
+      flex: 0 0 auto;
+      background: #fff;
+      border: 1px solid var(--bjs-grey-75);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .pane-header {
+      padding: 10px 12px;
+      font-weight: 600;
+      background: var(--bjs-grey-97);
+      border-bottom: 1px solid var(--bjs-grey-75);
+    }
+    .pane-body { padding: 4px 0; }   /* vertical only — entries are full-width */
+
+    .side { flex: 1 1 auto; min-width: 0; }
+    .side h2 { font-size: 13px; margin: 0 0 8px; color: hsl(225, 10%, 35%); }
+    pre {
+      margin: 0; background: #1e1f24; color: #d6d8de; padding: 12px; border-radius: 4px;
+      overflow: auto; font: 12px/1.5 "SFMono-Regular", Consolas, monospace; white-space: pre;
+    }
+    .hint { font-size: 12px; color: hsl(225, 10%, 45%); margin: 10px 0 0; }
+    kbd { font: 11px monospace; background: #fff; border: 1px solid var(--bjs-grey-75); border-radius: 3px; padding: 0 4px; }
+
+    /* consumer-owned content INSIDE entries (never reaches into .bjs-*) */
+    .wb-input-error { margin-top: 6px; font-size: 12px; color: hsl(0, 65%, 45%); }
+    .issue-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+    .issue-count { margin-left: auto; color: hsl(225, 10%, 45%); }
+  </style>
+</head>
+<body>
+  <div class="pane">
+    <div class="pane-header">Tokens</div>
+    <div class="pane-body" id="pane"></div>
+  </div>
+
+  <div class="side">
+    <h2>Serialized output (live)</h2>
+    <pre id="out"></pre>
+    <p class="hint">
+      New model: <b>full-width entries</b> (inset is internal — no <code>-10px</code>). A <b>plain entry</b>
+      that's <b>clickable</b> (top), an explicit <b>separator</b>, then the <b>Input</b> group holding one
+      caret-left collapsible per file (grid embedded in its body). Entries stack flush; dividers are only
+      where a <code>createSeparator()</code> is placed.<br><br>
+      Grid: <kbd>Tab</kbd> cell-to-cell, <kbd>↑</kbd><kbd>↓</kbd> rows, <kbd>Enter</kbd> down/append;
+      trash beside a row; ＋ add · ⤒ load · ⤓ download.
+    </p>
+  </div>
+
+  <script type="module">
+    import createCollapsibleEntry from '../src/CollapsibleEntry.js';
+    import createPlainEntry from '../src/PlainEntry.js';
+    import createSeparator from '../src/Separator.js';
+    import createTableEntry from '../src/TableEntry.js';
+
+    const el = (tag, className) => { const n = document.createElement(tag); if (className) n.className = className; return n; };
+    const pane = document.getElementById('pane');
+    const out = document.getElementById('out');
+
+    const serialize = (columns, rows) =>
+      [ columns.join('; ') ].concat(rows.filter(r => r.some(c => String(c).trim() !== '')).map(r => r.join(';'))).join('\n');
+    const parseCsv = text => {
+      const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+      return { header: (lines[0] || '').split(';').map(s => s.trim()), rows: lines.slice(1).map(l => l.split(';').map(s => s.trim())) };
+    };
+    const headersMatch = (h, cols) => h.length === cols.length && h.every((x, i) => x.trim().toLowerCase() === String(cols[i]).trim().toLowerCase());
+
+    const LOAD_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+    const SAVE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+
+    const fields = [];
+    const render = () => { out.textContent = fields.map(f => '# ' + f.filename + '\n' + serialize(f.columns, f.table.getRows())).join('\n\n'); };
+
+    // a clickable PLAIN entry (Issues-style row)
+    const issues = createPlainEntry({ onClick: () => alert('clicked the plain entry (like an Issues row)') });
+    const issueRow = el('div', 'issue-row');
+    issueRow.innerHTML = '<span>⚠︎ Issues</span><span class="issue-count">3</span>';
+    issues.contentEl.appendChild(issueRow);
+
+    // the Input group: a top-level caret-right collapsible holding one caret-left file collapsible each
+    const input = createCollapsibleEntry({ id: 'input', label: 'Input', open: true });
+
+    function fileField({ label, filename, columns, maxHeight, rows = [] }) {
+      const entry = createCollapsibleEntry({ id: label, label, open: true, caretSide: 'left' });
+      const error = el('div', 'wb-input-error'); error.hidden = true;
+      const table = createTableEntry({ columns, rows, maxHeight, onChange: render });
+
+      const fileInput = el('input'); fileInput.type = 'file'; fileInput.accept = '.csv,text/csv'; fileInput.hidden = true;
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files && fileInput.files[0]; if (!file) return;
+        file.text().then(text => {
+          const parsed = parseCsv(text);
+          if (!headersMatch(parsed.header, columns)) { error.hidden = false; error.textContent = 'Unexpected header in ' + file.name; return; }
+          error.hidden = true; table.setRows(parsed.rows); render();
+        }); fileInput.value = '';
+      });
+      const btn = (svg, title, fn) => { const b = el('button'); b.type = 'button'; b.title = title; b.innerHTML = svg; b.addEventListener('click', fn); return b; };
+      table.footerEl.append(btn(LOAD_ICON, 'Load ' + filename, () => fileInput.click()),
+                            btn(SAVE_ICON, 'Download ' + filename, () => {
+                              const a = el('a'); a.href = URL.createObjectURL(new Blob([serialize(columns, table.getRows())], {type:'text/csv'})); a.download = filename; a.click(); URL.revokeObjectURL(a.href);
+                            }));
+      entry.contentEl.append(table.element, error, fileInput);
+      fields.push({ filename, columns, table });
+      return entry.element;
+    }
+
+    input.contentEl.appendChild(fileField({
+      label: 'Instance', filename: 'instance.csv',
+      columns: [ 'INSTANCE_ID', 'NODE_ID', 'INITIALIZATION', 'DISCLOSURE', 'READY', 'COMPLETION' ],
+      maxHeight: 160,
+      rows: Array.from({ length: 9 }, (_, i) => [ 'Instance' + (i + 1), 'EarliestArrival_Process', 'initial_location := "Origin' + (i + 1) + '"', '', '', '' ])
+    }));
+    input.contentEl.appendChild(fileField({ label: 'durations.csv', filename: 'durations.csv', columns: [ 'From', 'To', 'Duration' ] }));
+
+    // assemble: clickable plain entry · explicit separator · Input group  (flush otherwise)
+    pane.append(issues.element, createSeparator(), input.element);
+    render();
+  </script>
+</body>
+</html>

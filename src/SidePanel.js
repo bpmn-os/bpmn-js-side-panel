@@ -83,8 +83,8 @@ export default class SidePanel {
     const propertiesPanel = this._injector.get('propertiesPanel', false);
 
     if (propertiesPanel) {
-      const pane = this.addTab({ id: 'properties', label: 'Properties', priority: 1000 });
-      propertiesPanel.attachTo(pane);
+      const { body } = this.addTab({ id: 'properties', label: 'Properties', priority: 1000 });
+      propertiesPanel.attachTo(body);
     }
   }
 
@@ -101,13 +101,14 @@ export default class SidePanel {
   }
 
   /**
-   * Add a tab. Returns the tab's content element for the caller to render into.
+   * Add a tab. The side panel owns the tab structure: a scrolling `body` above a fixed `footer`. Both
+   * hold a sequence of entries (createCollapsibleEntry / createPlainEntry) and separators (createSeparator).
    *
    * @param {Object} options
    * @param {string} options.id
    * @param {string} options.label
    * @param {number} [options.priority=0]  higher priority tabs are placed first
-   * @return {HTMLElement} the tab's content pane
+   * @return {{ body: HTMLElement, footer: HTMLElement }} the tab's scroll body and fixed footer
    */
   addTab({ id, label, priority = 0 }) {
     if (this.getTab(id)) {
@@ -122,6 +123,10 @@ export default class SidePanel {
 
     const pane = el('div', 'bjs-side-panel-pane');
     pane.setAttribute('data-tab', id);
+    const body = el('div', 'bjs-side-panel-body');     // scrolls; holds entries + separators
+    const footer = el('div', 'bjs-side-panel-footer');  // fixed at the bottom; holds entries + separators
+    pane.appendChild(body);
+    pane.appendChild(footer);
 
     this._tabs.push({ id, label, priority, button, pane });
     this._tabs.sort((a, b) => b.priority - a.priority);
@@ -132,7 +137,7 @@ export default class SidePanel {
       this.activate(id);
     }
 
-    return pane;
+    return { body, footer };
   }
 
   removeTab(id) {

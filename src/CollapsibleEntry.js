@@ -24,6 +24,10 @@ import { el, makeClickable } from './entryUtil.js';
  * @param {boolean} [options.open=false]     initial open state (ignored when not expandable)
  * @param {'left'|'right'} [options.caretSide='right'] disclosure-caret placement, mirroring
  *        properties-panel: top-level groups put it on the right, nested entries on the left
+ * @param {'header'|'caret'} [options.toggleOn='header'] what click toggles the disclosure. `'header'`
+ *        (default, Issues/properties-panel style) toggles on a click anywhere in the summary row.
+ *        `'caret'` toggles only on the caret, leaving summary/row clicks to the consumer (via `onClick`,
+ *        e.g. select the row's item) — the caret stops propagation so it never also fires `onClick`.
  * @param {boolean} [options.expandable=true] false → a plain row with no arrow and no content body
  * @param {Function} [options.remove]        when given, renders a hover-revealed remove control
  * @param {string} [options.emptyLabel='<empty>'] placeholder shown when `label` is empty
@@ -46,6 +50,7 @@ export default function createCollapsibleEntry(options = {}) {
     label,
     open = false,
     caretSide = 'right',
+    toggleOn = 'header',
     expandable = true,
     remove,
     onToggle,
@@ -88,8 +93,9 @@ export default function createCollapsibleEntry(options = {}) {
   // disclosure caret (expandable entries only), rotates when open. Placement mirrors properties-panel:
   // top-level groups on the right (default); nested entries on the left, where the caret is pinned
   // absolutely (see .bjs-caret-left CSS) so DOM order is irrelevant — the class alone drives it.
+  let arrow = null;
   if (expandable) {
-    const arrow = el('button', 'bjs-collapsible-entry-arrow');
+    arrow = el('button', 'bjs-collapsible-entry-arrow');
     arrow.type = 'button';
     arrow.setAttribute('aria-label', 'Toggle');
     arrow.innerHTML = ARROW_SVG;
@@ -127,7 +133,13 @@ export default function createCollapsibleEntry(options = {}) {
     if (open) {
       element.classList.add('bjs-open');   // set initial state directly, without firing onToggle
     }
-    header.addEventListener('click', toggle);
+    if (toggleOn === 'caret') {
+      // caret-scoped: only the disclosure caret toggles, so a summary/row click is free for the
+      // consumer (e.g. select the row's item). stopPropagation keeps the caret from also firing onClick.
+      arrow.addEventListener('click', (event) => { event.stopPropagation(); toggle(); });
+    } else {
+      header.addEventListener('click', toggle); // whole-header toggle (Issues/properties-panel style)
+    }
   }
 
   const setLabel = (value) => {

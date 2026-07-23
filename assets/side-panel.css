@@ -531,3 +531,116 @@ body.bjs-side-panel-resizing * {
   width: 16px;
   height: 16px;
 }
+
+/* List / OrderedList — keyed live containers (createListEntry / createOrderedListEntry). A List is a
+   plain vertical stack of entry elements; an OrderedList wraps each entry with a reorder strip that
+   shows only while reordering is enabled. */
+.bjs-list,
+.bjs-ordered-list {
+  display: block;
+}
+
+/* vertical rhythm between items, matching adjacent collapsible entries */
+.bjs-list > * + *,
+.bjs-ordered-list > .bjs-ordered-list-row + .bjs-ordered-list-row {
+  margin-top: 5px;
+}
+
+/* optional separators (`separators: true` / `setSeparators`): entries sit flush with a hairline
+   between them, the same 1px grey-75 rule as createSeparator and properties-panel's group border.
+   Issues-style lists turn this on; token lists leave it off (the spaced default above). */
+.bjs-list.bjs-list-separated > * + *,
+.bjs-ordered-list.bjs-list-separated > .bjs-ordered-list-row + .bjs-ordered-list-row {
+  margin-top: 0;
+  border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+}
+
+/* each ordered row is [reorder strip][entry]; the strip sits opposite the caret (left by default) */
+.bjs-ordered-list-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.bjs-ordered-list.bjs-strip-right > .bjs-ordered-list-row {
+  flex-direction: row-reverse;
+}
+
+.bjs-ordered-list-item {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Keep the entry's summary row (the label) at one vertical position whether the entry is collapsed
+   or expanded. The header is given the strip's collapsed height (two 16px arrows + 2px top/bottom
+   padding = 36px), so the label centres on the midpoint between ▲ and ▼ while collapsed and stays at
+   that exact spot when the entry expands: the body just grows below it, the label does not move. */
+.bjs-ordered-list-item > .bjs-collapsible-entry > .bjs-collapsible-entry-header {
+  min-height: 36px;
+}
+
+/* the reorder strip: a thin lane, hidden until reordering is on. ▲ (top) and ▼ (bottom), styled like
+   the collapse caret (grey glyph, circular hover). A passive line between them grows with an expanded
+   entry and collapses to nothing on a short row, so it appears only when it has the height for it. */
+.bjs-reorder-strip {
+  flex: 0 0 auto;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  /* border-box + 20px width = a 16px content lane (the arrow's size) plus a 4px outer gap, so the
+     arrow circle keeps the same gap from the panel edge that the disclosure caret keeps on its side
+     (the header's 4px padding-right). Explicit box-sizing so an inherited border-box can't shrink it. */
+  box-sizing: border-box;
+  width: 20px;
+  padding: 2px 0 2px 4px;
+}
+
+/* right-hand strip: mirror the outer gap to the right edge */
+.bjs-ordered-list.bjs-strip-right > .bjs-ordered-list-row > .bjs-reorder-strip {
+  padding: 2px 4px 2px 0;
+}
+
+.bjs-ordered-list.bjs-reordering > .bjs-ordered-list-row > .bjs-reorder-strip {
+  display: flex;
+}
+
+/* ▲/▼: a 16px circular hover target with a grey-35 glyph and a grey-90 hover circle, matching the
+   disclosure caret's control style so the strip reads as part of the same family. */
+.bjs-reorder-up,
+.bjs-reorder-down {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  cursor: pointer;
+}
+
+.bjs-reorder-up:hover:not(:disabled),
+.bjs-reorder-down:hover:not(:disabled) {
+  background: var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
+.bjs-reorder-up:disabled,
+.bjs-reorder-down:disabled {
+  color: var(--bjs-grey-85, hsl(225, 10%, 85%));
+  cursor: default;
+}
+
+/* passive connector line between the arrows. It grows to fill the space between them, so it only
+   shows on an expanded entry and collapses to nothing on a short/collapsed row. Not interactive. */
+.bjs-reorder-line {
+  flex: 1 1 auto;
+  width: 2px;
+  min-height: 0;
+  /* no vertical margin: on a collapsed entry the line is 0-height and the arrows sit right together;
+     on an expanded entry the line runs straight from one arrow to the other. */
+  margin: 0;
+  border-radius: 1px;
+  background: var(--bjs-grey-85, hsl(225, 10%, 85%));
+}

@@ -49,17 +49,34 @@ test('open state: initial, toggle and header click', () => {
   assert.equal(entry.isOpen(), false);
 });
 
-test('plain row: not expandable, no arrow, no content body', () => {
+test('plain row: not expandable, no content body, an inert caret', () => {
   dom();
   const entry = createCollapsibleEntry({ id: 'p', label: 'Plain', expandable: false });
   assert.ok(!entry.element.classList.contains('bjs-collapsible-entry-expandable'));
   assert.equal(entry.contentEl, null);
-  assert.equal(entry.element.querySelector('.bjs-collapsible-entry-arrow'), null);
+
+  // the caret is rendered so the row keeps the same shape as an expandable one (the CSS hides it with
+  // `visibility`), and it is inert: disabled, out of the tab order, hidden from a reader, toggling nothing
+  const arrow = entry.element.querySelector('.bjs-collapsible-entry-arrow');
+  assert.ok(arrow, 'renders the caret, whose space the row keeps');
+  assert.equal(arrow.disabled, true);
+  assert.equal(arrow.getAttribute('tabindex'), '-1');
+  assert.equal(arrow.getAttribute('aria-hidden'), 'true');
+  assert.equal(arrow.getAttribute('aria-label'), null);
+  click(arrow);
+  assert.equal(entry.isOpen(), false);
 
   // header clicks and setOpen are inert on a plain row
   click(entry.element.querySelector('.bjs-collapsible-entry-header'));
   entry.setOpen(true);
   assert.equal(entry.isOpen(), false);
+});
+
+test('caret placement is independent of expandability', () => {
+  dom();
+  const plain = createCollapsibleEntry({ id: 'l', label: 'Left', caretSide: 'left', expandable: false });
+  assert.ok(plain.element.classList.contains('bjs-caret-left'),
+    'a plain row reserves the caret on the same side as its expandable siblings');
 });
 
 test('empty label renders the placeholder', () => {

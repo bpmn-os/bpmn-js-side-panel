@@ -4,9 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-- `npm test` — runs `node --test test/*.test.mjs` (built-in Node test runner). Note: no `test/`
-  directory exists yet, so this currently matches nothing. Add tests as `test/*.test.mjs`; run a
-  single file with `node --test test/foo.test.mjs`.
+- `npm test` — runs `node --test test/*.test.mjs` (built-in Node test runner). `test/` holds
+  `collapsible-entry.test.mjs`; add further tests as `test/*.test.mjs`, run a single file with
+  `node --test test/foo.test.mjs`. The DOM comes from **linkedom** (`parseHTML`), assigned to
+  `globalThis.document` — so **structure and behaviour are testable, geometry is not** (linkedom does
+  no layout). A claim about size or alignment has to be measured in a real browser; the token rows of
+  `bpmn-js-animation` are where that has been done.
 
 There is no build step — `src/` is shipped as-is (ESM). No linter is configured.
 
@@ -24,11 +27,24 @@ and separately import `assets/side-panel.css`.
 Two source files plus one stylesheet — but the design hinges on a division of labor between JS and
 CSS that isn't obvious from either alone:
 
-- `src/index.js` — the diagram-js module definition (`__init__: ['sidePanel']`).
+- `src/index.js` — the diagram-js module definition (`__init__: ['sidePanel']`), plus the entry
+  factories it re-exports.
 - `src/SidePanel.js` — the service. Wired via `$inject` on `config.sidePanel`, `injector`,
   `eventBus`, `canvas`. Builds all DOM imperatively (no framework; plain `document.createElement`
   via the local `el()` helper).
+- The **entry components**, each a factory returning a handle over a plain element:
+  `CollapsibleEntry.js`, `PlainEntry.js`, `TableEntry.js`, `ListEntry.js`, `OrderedListEntry.js`,
+  `Separator.js`, over the shared `entryUtil.js`.
 - `assets/side-panel.css` — layout + chrome.
+
+**An entry's shape does not depend on its state.** The insets are owned by the entry, not by the
+consumer, so that every entry in every tab lines up. The disclosure caret is part of that: it is
+rendered for a **plain** (non-expandable) entry too and hidden with `visibility`, never `display`, so
+the row keeps its space and a list mixing plain and expandable rows holds one alignment. Dropping the
+element instead widens a plain row's title by the caret's 22px plus its 4px gap, which is what the
+component did before and what misaligned such a list. On a plain row the caret is inert: `disabled`,
+`tabIndex -1`, `aria-hidden`, no `aria-label` and no listener. `bjs-caret-left` is likewise applied by
+the requested side alone, not by expandability, so the reservation sits where the siblings' carets are.
 
 **JS/CSS contract (the key thing to understand):** on `diagram.init`, `_init()` mounts into the
 configured `parent` slot and *stamps two class names* — `.bjs-layout` on the slot's parent (the

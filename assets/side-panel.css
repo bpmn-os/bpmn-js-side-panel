@@ -217,6 +217,14 @@ body.bjs-side-panel-resizing * {
   background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
+/* A plain row renders the caret too, and hides it here. `visibility` rather than `display`, so the
+   space is kept and a list mixing plain and expandable rows holds one alignment: shape is a property
+   of the entry kind, not of whether this particular entry can be opened. */
+.bjs-collapsible-entry:not(.bjs-collapsible-entry-expandable) > .bjs-collapsible-entry-header
+  > .bjs-collapsible-entry-arrow {
+  visibility: hidden;
+}
+
 .bjs-collapsible-entry.bjs-open > .bjs-collapsible-entry-header > .bjs-collapsible-entry-arrow {
   transform: rotate(90deg);
 }

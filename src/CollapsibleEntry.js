@@ -90,20 +90,29 @@ export default function createCollapsibleEntry(options = {}) {
     controlsEl.appendChild(removeBtn);
   }
 
-  // disclosure caret (expandable entries only), rotates when open. Placement mirrors properties-panel:
-  // top-level groups on the right (default); nested entries on the left, where the caret is pinned
-  // absolutely (see .bjs-caret-left CSS) so DOM order is irrelevant — the class alone drives it.
-  let arrow = null;
+  // Disclosure caret, rotating when open. Placement mirrors properties-panel: top-level groups on the
+  // right (default); nested entries on the left, where the caret is pinned absolutely (see
+  // .bjs-caret-left CSS) so DOM order is irrelevant — the class alone drives it.
+  //
+  // It is rendered for EVERY entry, expandable or not, so that a row's shape does not depend on
+  // whether it can be opened: on a plain row the CSS hides it with `visibility` and it keeps its
+  // space, so a list mixing the two kinds keeps one alignment. (Dropping the element instead would
+  // widen a plain row's title by the caret's width, and rows would not line up.) On a plain row it is
+  // inert: disabled, out of the tab order, hidden from a reader, and toggling nothing.
+  const arrow = el('button', 'bjs-collapsible-entry-arrow');
+  arrow.type = 'button';
+  arrow.innerHTML = ARROW_SVG;
   if (expandable) {
-    arrow = el('button', 'bjs-collapsible-entry-arrow');
-    arrow.type = 'button';
     arrow.setAttribute('aria-label', 'Toggle');
-    arrow.innerHTML = ARROW_SVG;
-    if (caretSide === 'left') {
-      element.classList.add('bjs-caret-left');
-    }
-    header.appendChild(arrow);
+  } else {
+    arrow.disabled = true;
+    arrow.tabIndex = -1;
+    arrow.setAttribute('aria-hidden', 'true');
   }
+  if (caretSide === 'left') {
+    element.classList.add('bjs-caret-left');
+  }
+  header.appendChild(arrow);
 
   // content body (entries) — only for expandable entries
   let contentEl = null;

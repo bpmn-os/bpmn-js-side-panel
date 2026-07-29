@@ -1,4 +1,4 @@
-import { el, makeClickable } from './entryUtil.js';
+import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
 
 /**
  * Plain-DOM collapsible entry — the first entry-component of the side panel's own UI toolkit.
@@ -67,28 +67,16 @@ export default function createCollapsibleEntry(options = {}) {
     element.setAttribute('data-entry-id', id);
   }
 
-  const header = el('div', 'bjs-collapsible-entry-header');
+  // the summary row, shared with the simple entry (see buildEntryRow) — here it is the header, with
+  // the caret appended to it and the body below
+  const { row: header, titleEl: summaryEl, controlsEl } = buildEntryRow({
+    rowClass: 'bjs-collapsible-entry-header',
+    titleClass: 'bjs-collapsible-entry-title',
+    controlsClass: 'bjs-collapsible-entry-controls',
+    removeClass: 'bjs-collapsible-entry-remove',
+    remove
+  });
   element.appendChild(header);
-
-  // summary slot (fills the row; the caret/controls sit to its right)
-  const summaryEl = el('div', 'bjs-collapsible-entry-title');
-  header.appendChild(summaryEl);
-
-  // controls slot (right-aligned, before the caret); the optional remove control is the first
-  const controlsEl = el('div', 'bjs-collapsible-entry-controls');
-  header.appendChild(controlsEl);
-
-  if (typeof remove === 'function') {
-    const removeBtn = el('button', 'bjs-collapsible-entry-remove');
-    removeBtn.type = 'button';
-    removeBtn.setAttribute('aria-label', 'Remove');
-    removeBtn.innerHTML = REMOVE_SVG;
-    removeBtn.addEventListener('click', (event) => {
-      event.stopPropagation();
-      remove(event);
-    });
-    controlsEl.appendChild(removeBtn);
-  }
 
   // Disclosure caret, rotating when open. Placement mirrors properties-panel: top-level groups on the
   // right (default); nested entries on the left, where the caret is pinned absolutely (see
@@ -151,18 +139,7 @@ export default function createCollapsibleEntry(options = {}) {
     }
   }
 
-  const setLabel = (value) => {
-    if (value == null || value === '') {
-      summaryEl.textContent = emptyLabel;
-      summaryEl.classList.add('bjs-empty');
-    } else if (typeof value === 'string') {
-      summaryEl.textContent = value;
-      summaryEl.classList.remove('bjs-empty');
-    } else {
-      summaryEl.replaceChildren(value);
-      summaryEl.classList.remove('bjs-empty');
-    }
-  };
+  const setLabel = labelSetter(summaryEl, emptyLabel);
   setLabel(label);
 
   const destroy = () => {
@@ -182,9 +159,3 @@ const ARROW_SVG =
   '<path fill="currentColor" fill-rule="evenodd" transform="rotate(-45 6 8)" ' +
   'd="M10,12 L3,12 C2.44771525,12 2,11.5522847 2,11 C2,10.4477153 2.44771525,10 3,10 ' +
   'L8,10 L8,5 C8,4.44771525 8.44771525,4 9,4 C9.55228475,4 10,4.44771525 10,5 L10,12 Z"/></svg>';
-
-const REMOVE_SVG =
-  '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
-  '<path d="M6 2.5h4M3 4.5h10M5 4.5v8a1 1 0 001 1h4a1 1 0 001-1v-8M6.5 6.5v5M9.5 6.5v5" ' +
-  'fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" ' +
-  'stroke-linejoin="round"/></svg>';

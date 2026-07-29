@@ -148,7 +148,8 @@ body.bjs-side-panel-resizing * {
    uses our own `bjs-collapsible-*` classes and `--bjs-*` tokens (declared at :root above) — no
    `bio-properties-panel-*` names, no dependency on properties-panel.css. Every rule is class-scoped
    so nothing leaks into a hosted properties panel attached inside a pane. */
-.bjs-collapsible-entry {
+.bjs-collapsible-entry,
+.bjs-simple-entry {
   font-size: 13px;
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
 }
@@ -158,14 +159,17 @@ body.bjs-side-panel-resizing * {
    Entries stack flush; division between them is an explicit `.bjs-separator` the consumer places, so
    entries can also sit directly next to each other with no separation when that is wanted. */
 
-/* the row: summary fills, controls + disclosure caret sit to its right (bpmn-workbench layout) */
-.bjs-collapsible-entry-header {
+/* The summary row both row-shaped entries are built on: the collapsible entry's header and the whole
+   of a simple entry. One definition, so a row is the same row whether or not it discloses. */
+.bjs-collapsible-entry-header,
+.bjs-simple-entry-row {
   display: flex;
   align-items: center;
   gap: 4px;
   min-height: 26px;
   /* Internal inset: the title starts at the shared inset; the caret keeps its own 4px gap from the right
-     edge. Both are owned here (not by the consumer) so every entry in every tab lines up identically. */
+     edge. Both are owned here (not by the consumer) so every entry in every tab lines up identically.
+     A simple entry has no caret, so its title runs to the right inset instead of stopping short of one. */
   padding: 2px 4px 2px var(--bjs-entry-inset, 12px);
   line-height: 1.4;
   user-select: none;
@@ -175,7 +179,8 @@ body.bjs-side-panel-resizing * {
   cursor: pointer;
 }
 
-.bjs-collapsible-entry-title {
+.bjs-collapsible-entry-title,
+.bjs-simple-entry-title {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -183,12 +188,14 @@ body.bjs-side-panel-resizing * {
   white-space: nowrap;
 }
 
-.bjs-collapsible-entry-title.bjs-empty {
+.bjs-collapsible-entry-title.bjs-empty,
+.bjs-simple-entry-title.bjs-empty {
   color: var(--bjs-grey-55, hsl(225, 10%, 55%));
   font-style: italic;
 }
 
-.bjs-collapsible-entry-controls {
+.bjs-collapsible-entry-controls,
+.bjs-simple-entry-controls {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -253,7 +260,8 @@ body.bjs-side-panel-resizing * {
 }
 
 /* controls (remove, and later reorder) are revealed on hover/focus, matching properties-panel feel */
-.bjs-collapsible-entry-remove {
+.bjs-collapsible-entry-remove,
+.bjs-simple-entry-remove {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -269,11 +277,14 @@ body.bjs-side-panel-resizing * {
 }
 
 .bjs-collapsible-entry-header:hover .bjs-collapsible-entry-remove,
-.bjs-collapsible-entry-header:focus-within .bjs-collapsible-entry-remove {
+.bjs-collapsible-entry-header:focus-within .bjs-collapsible-entry-remove,
+.bjs-simple-entry-row:hover .bjs-simple-entry-remove,
+.bjs-simple-entry-row:focus-within .bjs-simple-entry-remove {
   visibility: visible;
 }
 
-.bjs-collapsible-entry-remove:hover {
+.bjs-collapsible-entry-remove:hover,
+.bjs-simple-entry-remove:hover {
   background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 

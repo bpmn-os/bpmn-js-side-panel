@@ -33,18 +33,29 @@ CSS that isn't obvious from either alone:
   `eventBus`, `canvas`. Builds all DOM imperatively (no framework; plain `document.createElement`
   via the local `el()` helper).
 - The **entry components**, each a factory returning a handle over a plain element:
-  `CollapsibleEntry.js`, `PlainEntry.js`, `TableEntry.js`, `ListEntry.js`, `OrderedListEntry.js`,
-  `Separator.js`, over the shared `entryUtil.js`.
+  `SimpleEntry.js`, `CollapsibleEntry.js`, `PlainEntry.js`, `TableEntry.js`, `ListEntry.js`,
+  `OrderedListEntry.js`, `Separator.js`, over the shared `entryUtil.js`, which holds `buildEntryRow`
+  (the summary row both row-shaped entries draw), `labelSetter` and `makeClickable`.
+
+**Three ways to be an entry, and which is which.** A **simple** entry is a row that discloses
+nothing, so its label runs the full width; it suits a list where nothing opens. A **collapsible**
+entry is that same row plus a caret and a body, and its `expandable: false` is for a row that cannot
+open but stands among rows that can, which is why such a row keeps the caret's space. A **plain**
+entry is not a row at all but a full-width box the consumer fills, for a note or a hint. The row is
+built in one place so the simple and the collapsible cannot drift, and the CSS defines its geometry
+once, `.bjs-collapsible-entry-header, .bjs-simple-entry-row`.
 - `assets/side-panel.css` — layout + chrome.
 
 **An entry's shape does not depend on its state.** The insets are owned by the entry, not by the
-consumer, so that every entry in every tab lines up. The disclosure caret is part of that: it is
-rendered for a **plain** (non-expandable) entry too and hidden with `visibility`, never `display`, so
-the row keeps its space and a list mixing plain and expandable rows holds one alignment. Dropping the
-element instead widens a plain row's title by the caret's 22px plus its 4px gap, which is what the
-component did before and what misaligned such a list. On a plain row the caret is inert: `disabled`,
-`tabIndex -1`, `aria-hidden`, no `aria-label` and no listener. `bjs-caret-left` is likewise applied by
-the requested side alone, not by expandability, so the reservation sits where the siblings' carets are.
+consumer, so that every entry in every tab lines up. Within the collapsible entry the disclosure caret
+is part of that: it is rendered for a non-expandable entry too and hidden with `visibility`, never
+`display`, so the row keeps its space and a list mixing the two holds one alignment. Dropping the
+element instead widens such a row's title by the caret's 22px plus its 4px gap, which is what the
+component did before and what misaligned such a list. On a non-expandable row the caret is inert:
+`disabled`, `tabIndex -1`, `aria-hidden`, no `aria-label` and no listener. `bjs-caret-left` is likewise
+applied by the requested side alone, not by expandability, so the reservation sits where the siblings'
+carets are. A row that discloses nothing at all in a list where nothing discloses is a **simple**
+entry instead, and reserves nothing.
 
 **JS/CSS contract (the key thing to understand):** on `diagram.init`, `_init()` mounts into the
 configured `parent` slot and *stamps two class names* — `.bjs-layout` on the slot's parent (the

@@ -70,6 +70,14 @@
   border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
+/* a note standing in for a tab's content (see SidePanel#setNote) */
+.bjs-side-panel-note {
+  padding: 16px 12px;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  font-size: 13px;
+  line-height: 1.8;
+}
+
 .bjs-side-panel-body {
   flex: 1 1 auto;
   min-width: 0;

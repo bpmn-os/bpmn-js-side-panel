@@ -58,6 +58,10 @@ panel module is registered, **do not** set its `parent` — the side panel attac
 - `removeTab(id)`
 - `activate(id)`
 - `getTab(id) -> { id, label, pane } | undefined`
+- `setNote(id, note)` — show a note in place of a tab's content, `note` being an HTML string or an
+  element, or `null` to restore the content. The tab keeps its title and its place; what it holds is
+  hidden while the note stands there. It is for a tab whose content does not apply for the moment and
+  whose absence would otherwise be unexplained, a properties panel during a simulation among them.
 
 The tab bar is hidden automatically when there is only one tab.
 

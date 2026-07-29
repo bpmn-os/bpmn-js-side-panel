@@ -125,10 +125,13 @@ export default class SidePanel {
     pane.setAttribute('data-tab', id);
     const body = el('div', 'bjs-side-panel-body');     // scrolls; holds entries + separators
     const footer = el('div', 'bjs-side-panel-footer');  // fixed at the bottom; holds entries + separators
+    const note = el('div', 'bjs-side-panel-note');      // shown in place of both while a note is set
+    note.style.display = 'none';
     pane.appendChild(body);
     pane.appendChild(footer);
+    pane.appendChild(note);
 
-    this._tabs.push({ id, label, priority, button, pane });
+    this._tabs.push({ id, label, priority, button, pane, body, footer, note });
     this._tabs.sort((a, b) => b.priority - a.priority);
 
     this._renderTabs();
@@ -168,6 +171,44 @@ export default class SidePanel {
       tab.button.classList.toggle('active', active);
       tab.pane.classList.toggle('active', active);
     });
+  }
+
+  /**
+   * Show a note in place of a tab's content, or take it away again with `null`.
+   *
+   * The tab keeps its title and stays where it is; what it holds is hidden and the note stands in its
+   * place. It is for a tab whose content does not apply for the moment and whose absence would otherwise be
+   * unexplained — a properties panel while a simulation runs, where editing is off, saying what the reader
+   * may do instead.
+   *
+   * @param {string} id
+   * @param {string|Node|null} note  an HTML string, an element, or null to restore the content
+   */
+  setNote(id, note) {
+    const tab = this._tabs.find(t => t.id === id);
+
+    if (!tab) {
+      throw new Error('tab <' + id + '> does not exist');
+    }
+
+    if (note == null) {
+      tab.note.replaceChildren();
+      tab.note.style.display = 'none';
+      tab.body.style.display = '';
+      tab.footer.style.display = '';
+
+      return;
+    }
+
+    if (typeof note === 'string') {
+      tab.note.innerHTML = note;
+    } else {
+      tab.note.replaceChildren(note);
+    }
+
+    tab.note.style.display = '';
+    tab.body.style.display = 'none';
+    tab.footer.style.display = 'none';
   }
 
   getTab(id) {

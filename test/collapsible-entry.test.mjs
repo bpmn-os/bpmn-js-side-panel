@@ -86,16 +86,18 @@ test('empty label renders the placeholder', () => {
   assert.ok(entry.summaryEl.classList.contains('bjs-empty'));
 });
 
-test('remove control: fires callback and does not toggle', () => {
-  dom();
-  let removed = 0;
-  const entry = createCollapsibleEntry({ id: 'r', label: 'R', open: false, remove: () => removed++ });
-  const btn = entry.controlsEl.querySelector('.bjs-collapsible-entry-remove');
-  assert.ok(btn, 'has a remove button');
+test('a control the row carries acts on the row, and does not toggle it', () => {
+  const document = dom();
+  let acted = 0;
+  const button = document.createElement('button');
+  button.addEventListener('click', () => acted++);
 
-  click(btn);
-  assert.equal(removed, 1, 'remove callback fired');
-  assert.equal(entry.isOpen(), false, 'remove click did not toggle the entry');
+  const entry = createCollapsibleEntry({ id: 'r', label: 'R', open: false, controls: button });
+  assert.equal(entry.controlsEl.firstChild, button, 'the control is held in the row\'s controls slot');
+
+  click(button);
+  assert.equal(acted, 1, 'the control acted');
+  assert.equal(entry.isOpen(), false, 'and did not toggle the entry');
 });
 
 test('nesting (item 5): child entries live in the parent content body', () => {

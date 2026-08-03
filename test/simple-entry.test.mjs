@@ -79,16 +79,18 @@ test('onClick makes the whole row clickable', () => {
   assert.equal(clicked, 1);
 });
 
-test('remove control: fires its callback and does not fire the row click', () => {
-  dom();
-  let removed = 0, clicked = 0;
-  const entry = createSimpleEntry({ label: 'r', onClick: () => clicked++, remove: () => removed++ });
+test('a control the row carries acts on the row, and does not click the row', () => {
+  const document = dom();
+  let acted = 0, clicked = 0;
+  const button = document.createElement('button');
+  button.addEventListener('click', () => acted++);
 
-  const btn = entry.controlsEl.querySelector('.bjs-simple-entry-remove');
-  assert.ok(btn, 'has a remove control');
-  click(btn);
-  assert.equal(removed, 1);
-  assert.equal(clicked, 0, 'the remove control stops the click reaching the row');
+  const entry = createSimpleEntry({ label: 'r', onClick: () => clicked++, controls: button });
+  assert.equal(entry.controlsEl.firstChild, button, 'the control is held in the row\'s controls slot');
+
+  click(button);
+  assert.equal(acted, 1, 'the control acted');
+  assert.equal(clicked, 0, 'and its click never reached the row');
 });
 
 test('destroy detaches the entry', () => {

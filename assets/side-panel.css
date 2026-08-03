@@ -267,9 +267,11 @@ body.bjs-side-panel-resizing * {
   padding-left: 0;
 }
 
-/* controls (remove, and later reorder) are revealed on hover/focus, matching properties-panel feel */
-.bjs-collapsible-entry-remove,
-.bjs-simple-entry-remove {
+/* A control a row carries: the shape is the panel's, what it does and when it shows is the consumer's.
+   Visible by default, since a control a reader must act on cannot hide; add `bjs-entry-control-quiet`
+   for the properties-panel feel, where a removal appears on hover or focus. */
+.bjs-collapsible-entry-control,
+.bjs-simple-entry-control {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,18 +283,21 @@ body.bjs-side-panel-resizing * {
   background: none;
   color: var(--bjs-grey-35, hsl(225, 10%, 35%));
   cursor: pointer;
+}
+
+.bjs-entry-control-quiet {
   visibility: hidden;
 }
 
-.bjs-collapsible-entry-header:hover .bjs-collapsible-entry-remove,
-.bjs-collapsible-entry-header:focus-within .bjs-collapsible-entry-remove,
-.bjs-simple-entry-row:hover .bjs-simple-entry-remove,
-.bjs-simple-entry-row:focus-within .bjs-simple-entry-remove {
+.bjs-collapsible-entry-header:hover .bjs-entry-control-quiet,
+.bjs-collapsible-entry-header:focus-within .bjs-entry-control-quiet,
+.bjs-simple-entry-row:hover .bjs-entry-control-quiet,
+.bjs-simple-entry-row:focus-within .bjs-entry-control-quiet {
   visibility: visible;
 }
 
-.bjs-collapsible-entry-remove:hover,
-.bjs-simple-entry-remove:hover {
+.bjs-collapsible-entry-control:hover,
+.bjs-simple-entry-control:hover {
   background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 

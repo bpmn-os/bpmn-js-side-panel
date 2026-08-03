@@ -4,9 +4,9 @@ import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
  * Plain-DOM **summary row** — one line of an entry list that discloses nothing.
  *
  * It is the collapsible entry's header without the caret and without the body, drawn from the same
- * helper so the two cannot drift: a label slot that takes the width, a controls slot held to its
- * right, and the optional remove control among them. Because it has no disclosure at all, the label
- * runs the full width of the entry rather than stopping short of a caret's space.
+ * helper so the two cannot drift: a label slot that takes the width and a controls slot held to its
+ * right, holding whatever controls the row carries. Because it has no disclosure at all, the label runs
+ * the full width of the entry rather than stopping short of a caret's space.
  *
  * Which of the three to reach for. **This one** for a row that never opens, in a list where nothing
  * opens: a token in a panel that shows no detail, a message, a name with a value beside it. A
@@ -22,7 +22,7 @@ import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
  * @param {string} [options.id]              stamped as data-entry-id
  * @param {string|Node} [options.label]      the row's content, a string or an element
  * @param {Function} [options.onClick]       when given, the whole row is clickable
- * @param {Function} [options.remove]        when given, renders a hover-revealed remove control
+ * @param {Node|Node[]} [options.controls]   controls the row carries, held right of the label
  * @param {string} [options.emptyLabel='<empty>'] placeholder shown when `label` is empty
  *
  * @return {{
@@ -38,7 +38,7 @@ export default function createSimpleEntry(options = {}) {
     id,
     label,
     onClick,
-    remove,
+    controls,
     emptyLabel = '<empty>'
   } = options;
 
@@ -52,8 +52,7 @@ export default function createSimpleEntry(options = {}) {
     rowClass: 'bjs-simple-entry-row',
     titleClass: 'bjs-simple-entry-title',
     controlsClass: 'bjs-simple-entry-controls',
-    removeClass: 'bjs-simple-entry-remove',
-    remove
+    controls
   });
   element.appendChild(row);
 

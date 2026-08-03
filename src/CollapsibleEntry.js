@@ -29,7 +29,7 @@ import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
  *        `'caret'` toggles only on the caret, leaving summary/row clicks to the consumer (via `onClick`,
  *        e.g. select the row's item) — the caret stops propagation so it never also fires `onClick`.
  * @param {boolean} [options.expandable=true] false → a plain row with no arrow and no content body
- * @param {Function} [options.remove]        when given, renders a hover-revealed remove control
+ * @param {Node|Node[]} [options.controls]   controls the row carries, held right of the label
  * @param {string} [options.emptyLabel='<empty>'] placeholder shown when `label` is empty
  *
  * @return {{
@@ -52,7 +52,7 @@ export default function createCollapsibleEntry(options = {}) {
     caretSide = 'right',
     toggleOn = 'header',
     expandable = true,
-    remove,
+    controls,
     onToggle,
     onClick,
     emptyLabel = '<empty>'
@@ -73,8 +73,7 @@ export default function createCollapsibleEntry(options = {}) {
     rowClass: 'bjs-collapsible-entry-header',
     titleClass: 'bjs-collapsible-entry-title',
     controlsClass: 'bjs-collapsible-entry-controls',
-    removeClass: 'bjs-collapsible-entry-remove',
-    remove
+    controls
   });
   element.appendChild(header);
 

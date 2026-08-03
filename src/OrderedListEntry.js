@@ -17,6 +17,12 @@ import createListEntry from './ListEntry.js';
  * reordering is enabled (`bjs-reordering`); ▲ is disabled on the first entry, ▼ on the last. Reorder
  * is fully keyboard-operable because ▲/▼ are real buttons. There is no drag support.
  *
+ * An entry added as **fixed** holds its position. It is an anchor rather than a member of the order: it
+ * carries the lane but no arrows, neither `move` nor the user's controls displace it, and no other entry
+ * passes it, so ▲ is disabled on the entry below an anchor and ▼ on the entry above one. A list whose
+ * first entry is fixed therefore reorders freely beneath a heading that stays put. The lane is kept
+ * empty rather than dropped, so an anchor lines up with the entries around it.
+ *
  * @param {Object} [options]
  * @param {string} [options.id]
  * @param {'left'|'right'} [options.side='left']   which side the strip sits (default opposite the caret)
@@ -25,7 +31,7 @@ import createListEntry from './ListEntry.js';
  * @param {Function} [options.onReorder]           called with the new key order after any reorder
  * @return {{
  *   element: HTMLElement,
- *   add: (function(string, HTMLElement, number=): HTMLElement),
+ *   add: (function(string, HTMLElement, number=, Object=): HTMLElement),
  *   remove: (function(string): void),
  *   move: (function(string, number): void),
  *   moveUp: (function(string): void),
@@ -52,17 +58,19 @@ export default function createOrderedListEntry(options = {}) {
     element.setAttribute('data-entry-id', id);
   }
 
-  const rows = new Map();   // key -> { up, down, entryEl }
+  const rows = new Map();   // key -> { up, down, entryEl, fixed }
+
+  const isFixed = (key) => !!(rows.get(key) || {}).fixed;
 
   const syncEnds = () => {
     const ks = list.keys();
     ks.forEach((k, i) => {
       const r = rows.get(k);
-      if (!r) {
-        return;
+      if (!r || r.fixed) {
+        return; // an anchor carries no arrows
       }
-      r.up.disabled = (i === 0);
-      r.down.disabled = (i === ks.length - 1);
+      r.up.disabled = (i === 0) || isFixed(ks[i - 1]);
+      r.down.disabled = (i === ks.length - 1) || isFixed(ks[i + 1]);
     });
   };
 
@@ -72,8 +80,44 @@ export default function createOrderedListEntry(options = {}) {
     }
   };
 
+  // An anchor holds its position and nothing passes it, so a move is confined to the run of entries
+  // between the nearest anchor above and the nearest anchor below.
+  const bounds = (from) => {
+    const ks = list.keys();
+    let lower = 0,
+        upper = ks.length - 1;
+
+    for (let i = from - 1; i >= 0; i--) {
+      if (isFixed(ks[i])) {
+        lower = i + 1;
+        break;
+      }
+    }
+    for (let i = from + 1; i < ks.length; i++) {
+      if (isFixed(ks[i])) {
+        upper = i - 1;
+        break;
+      }
+    }
+
+    return [ lower, upper ];
+  };
+
   const move = (key, index) => {
-    list.move(key, index);
+    const from = list.keys().indexOf(key);
+
+    if (from < 0 || isFixed(key)) {
+      return;
+    }
+
+    const [ lower, upper ] = bounds(from),
+          target = Math.min(Math.max(index, lower), upper);
+
+    if (target === from) {
+      return;
+    }
+
+    list.move(key, target);
     syncEnds();
     emit();
   };
@@ -91,10 +135,25 @@ export default function createOrderedListEntry(options = {}) {
     }
   };
 
-  const add = (key, entryEl, index) => {
+  const add = (key, entryEl, index, options = {}) => {
     const row = el('div', 'bjs-ordered-list-row');
 
     const strip = el('div', 'bjs-reorder-strip');
+
+    if (options.fixed) {
+      // an anchor: the lane without the arrows, so it lines up with the entries it holds in place
+      const item = el('div', 'bjs-ordered-list-item');
+
+      item.appendChild(entryEl);
+      row.append(strip, item);
+
+      rows.set(key, { entryEl, fixed: true });
+      list.add(key, row, index);
+      syncEnds();
+
+      return entryEl;
+    }
+
     const up = el('button', 'bjs-reorder-up');
     up.type = 'button';
     up.title = 'Move up';

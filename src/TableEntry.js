@@ -286,14 +286,16 @@ export default function createTableEntry(options = {}) {
 
 // The exact icons @bpmn-io/properties-panel uses for its list add / remove controls, so a hosted table
 // entry reads identically next to a Properties tab (create = plus, delete = trash; filled currentColor).
-const CREATE_SVG =
+// They are exported because a consumer drawing its own create or delete control must draw the same glyph:
+// one trash in the panel, whatever row carries it.
+export const CREATE_SVG =
   '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
   '<path fill="currentColor" fill-rule="evenodd" d="M9,13 L9,9 L13,9 C13.5522847,9 14,8.55228475 14,8 ' +
   'C14,7.44771525 13.5522847,7 13,7 L9,7 L9,3 C9,2.44771525 8.55228475,2 8,2 C7.44771525,2 7,2.44771525 ' +
   '7,3 L7,7 L3,7 C2.44771525,7 2,7.44771525 2,8 C2,8.55228475 2.44771525,9 3,9 L7,9 L7,13 ' +
   'C7,13.5522847 7.44771525,14 8,14 C8.55228475,14 9,13.5522847 9,13 Z"/></svg>';
 
-const DELETE_SVG =
+export const DELETE_SVG =
   // viewBox offset so the (off-centre) properties-panel trash path — content ~x:0-10, y:0-12.55 — is
   // centred in the button rather than sitting up-and-left.
   '<svg width="16" height="16" viewBox="-3 -1.7 16 16" aria-hidden="true" focusable="false">' +

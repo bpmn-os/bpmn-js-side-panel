@@ -4,7 +4,7 @@ export { default as createSimpleEntry } from './SimpleEntry.js';
 export { default as createCollapsibleEntry } from './CollapsibleEntry.js';
 export { default as createPlainEntry } from './PlainEntry.js';
 export { default as createSeparator } from './Separator.js';
-export { default as createTableEntry } from './TableEntry.js';
+export { default as createTableEntry, CREATE_SVG, DELETE_SVG } from './TableEntry.js';
 export { default as createListEntry } from './ListEntry.js';
 export { default as createOrderedListEntry } from './OrderedListEntry.js';
 

@@ -394,18 +394,23 @@ export const CREATE_SVG =
   '7,3 L7,7 L3,7 C2.44771525,7 2,7.44771525 2,8 C2,8.55228475 2.44771525,9 3,9 L7,9 L7,13 ' +
   'C7,13.5522847 7.44771525,14 8,14 C8.55228475,14 9,13.5522847 9,13 Z"/></svg>';
 
-// Load and save, drawn as a stroked arrow over a tray rather than in the filled properties-panel manner,
-// there being no properties-panel control for either. They are exported for the same reason the other two
-// are: a consumer drawing its own load or save control draws the same glyph.
-export const UPLOAD_SVG =
-  '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" ' +
-  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-  '<path d="M8 11V3M4.5 5.5 8 2l3.5 3.5M3 13h10"/></svg>';
+// Load and save: Feather's upload and download (MIT; see LICENSE), there being no properties-panel control
+// for either. They are the glyphs the applications hosting this panel already use for the same two acts,
+// so that saving means one thing wherever it is offered. They are exported for the same reason the other
+// two are: a consumer drawing its own load or save control draws the same glyph.
+export const UPLOAD_SVG = feather(
+  '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/>' +
+  '<line x1="12" y1="3" x2="12" y2="15"/>');
 
-export const DOWNLOAD_SVG =
-  '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" ' +
-  'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">' +
-  '<path d="M8 2v8M4.5 7.5 8 11l3.5-3.5M3 13h10"/></svg>';
+export const DOWNLOAD_SVG = feather(
+  '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>' +
+  '<line x1="12" y1="15" x2="12" y2="3"/>');
+
+function feather(paths) {
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+    'focusable="false">' + paths + '</svg>';
+}
 
 export const DELETE_SVG =
   // viewBox offset so the (off-centre) properties-panel trash path — content ~x:0-10, y:0-12.55 — is

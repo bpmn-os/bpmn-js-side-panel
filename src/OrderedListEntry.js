@@ -215,17 +215,17 @@ export default function createOrderedListEntry(options = {}) {
   };
 }
 
-// Font Awesome Free's solid arrow-up and arrow-down, so the step controls share the icon language of the
-// disclosure caret rather than being ad-hoc triangles. They are CC BY 4.0 and attributed in LICENSE.
-const UP_SVG =
-  '<svg width="12" height="12" viewBox="0 0 640 640" aria-hidden="true" focusable="false">' +
-  '<path fill="currentColor" d="M342.6 73.4C330.1 60.9 309.8 60.9 297.3 73.4L137.3 233.4C124.8 245.9 ' +
-  '124.8 266.2 137.3 278.7C149.8 291.2 170.1 291.2 182.6 278.7L288 173.3L288 544C288 561.7 302.3 576 ' +
-  '320 576C337.7 576 352 561.7 352 544L352 173.3L457.4 278.7C469.9 291.2 490.2 291.2 502.7 278.7C515.2 ' +
-  '266.2 515.2 245.9 502.7 233.4L342.7 73.4z"/></svg>';
-const DOWN_SVG =
-  '<svg width="12" height="12" viewBox="0 0 640 640" aria-hidden="true" focusable="false">' +
-  '<path fill="currentColor" d="M297.4 566.6C309.9 579.1 330.2 579.1 342.7 566.6L502.7 406.6C515.2 ' +
-  '394.1 515.2 373.8 502.7 361.3C490.2 348.8 469.9 348.8 457.4 361.3L352 466.7L352 96C352 78.3 337.7 ' +
-  '64 320 64C302.3 64 288 78.3 288 96L288 466.7L182.6 361.3C170.1 348.8 149.8 348.8 137.3 361.3C124.8 ' +
-  '373.8 124.8 394.1 137.3 406.6L297.3 566.6z"/></svg>';
+// Feather's arrow-up and arrow-down (MIT; see LICENSE), which is the icon language the applications that
+// host this panel already speak, rather than ad-hoc triangles.
+//
+// Feather is drawn for a two-pixel stroke on a twenty-four-pixel grid, so at twelve pixels that stroke
+// renders at one and reads thin rather than light. What is kept across sizes is the weight and not the
+// number, so it is thickened here; the same glyph at sixteen keeps the two it was drawn with.
+const UP_SVG = arrow('<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>');
+const DOWN_SVG = arrow('<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>');
+
+function arrow(paths) {
+  return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+    'focusable="false">' + paths + '</svg>';
+}

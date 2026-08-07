@@ -2,9 +2,8 @@ MIT License
 
 Copyright (c) 2026 Asvin Goel
 
-Icons in `src/OrderedListEntry.js` are from Font Awesome Free
-(https://fontawesome.com), licensed CC BY 4.0
-(https://creativecommons.org/licenses/by/4.0/).
+Icons in `src/OrderedListEntry.js` and `src/TableEntry.js` are from Feather
+(https://feathericons.com): Copyright (c) 2013-2017 Cole Bemis, MIT licensed.
 
 Icons in `src/CollapsibleEntry.js` and `src/TableEntry.js` are from
 @bpmn-io/properties-panel: Copyright (c) 2020-present Camunda Services GmbH,

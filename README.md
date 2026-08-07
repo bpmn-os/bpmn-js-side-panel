@@ -168,6 +168,10 @@ where the panel sits in its host rather than what it is made of, and are unchang
 
 `npm run dev` serves `demo/`, which is the package shown working rather than described: a modeller with the
 properties panel hosted in a tab of its own, and a tab the demo adds, whose every entry says what it is.
+It runs the source rather than a copy of it, so what it shows is the package as it stands.
+
+It is published to <https://bpmn-os.github.io/bpmn-js-side-panel/> on every push to `main`, by the workflow
+in `.github/workflows/deploy.yml`, which runs the tests before it builds.
 
 ## Styling
 

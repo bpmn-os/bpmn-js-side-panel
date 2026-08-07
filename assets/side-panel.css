@@ -23,10 +23,11 @@
      carries its own optical margin. One value for the two would put a control's circle where a line of
      text stops, which reads as a control pushed inward rather than as a column of controls.
 
-     A container that has already paid the left inset for what stands in it — the body of a collapsible
-     entry — says so with `--bjs-entry-inset-left: 0`, so the inset is paid once however deeply an entry
-     is nested. There is no matching right-hand token: a container pays nothing on the right, so that a
-     control keeps its gap from the panel's edge rather than from the container's. */
+     The inset is paid once. What stands directly in a tab pays it, and nothing below that does: a container
+     that has paid it — the body of a collapsible entry — declares it zero for everything it holds, and
+     since a custom property inherits, that reaches an entry nested at any depth and a consumer's own rule
+     written against this token alike. So a tab's content lines up at one inset however deeply it is
+     wrapped, and no host needs a negative margin to undo a second one. */
   --bjs-entry-inset: 12px;
   --bjs-control-gap: 4px;
 
@@ -440,7 +441,7 @@ body.bjs-side-panel-resizing * {
   min-height: 26px;
   /* Internal inset: the label starts at the reading inset, the caret keeps the control gap. Both are owned
      here (not by the consumer) so every entry in every tab lines up identically. */
-  padding: 2px var(--bjs-control-gap, 4px) 2px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+  padding: 2px var(--bjs-control-gap, 4px) 2px var(--bjs-entry-inset, 12px);
   line-height: 1.4;
   user-select: none;
 }
@@ -573,23 +574,25 @@ body.bjs-side-panel-resizing * {
 }
 
 /* Expanded body: hidden until open. Its left inset matches the header's label, so what it holds stands
-   under what names it; caret-left drops that inset below. It pays nothing on the right, so a control
-   standing in it keeps its gap from the panel's edge rather than from the body's, and the controls of the
-   entries it holds stand in one column with the caret of the entry that holds them. */
+   under what names it; caret-left drops that inset below. On the right it pays the control gap, which is
+   where the caret above it ends, so that content of a consumer's own stops where the caret stops rather
+   than running past it. */
 .bjs-collapsible-entry-entries {
   display: none;
   /* 10px bottom padding gives the expanded body breathing room above whatever follows */
-  padding: 0 0 10px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+  padding: 0 var(--bjs-control-gap, 4px) 10px var(--bjs-entry-inset, 12px);
 }
 
-/* The body has paid the left inset, so an entry standing in it does not pay it again, exactly as a tab's
-   header and footer do for what stands in them. The reset is on what the body holds rather than on the
-   body itself, since the body's own padding is that inset and would go with it. It is inherited, so it
-   reaches an entry held in a list held in the body as it reaches one held directly, and an entry nested
-   more deeply still pays the inset once. The right side is not reset, the body having paid nothing
-   there. */
+/* The body has paid both of its insets, so nothing it holds pays either again. This is the whole of the
+   rule that a tab's content sits at one inset: what stands directly in a tab pays the inset, and every
+   descendant is told there is none left to pay. The declaration is on what the body holds rather than on
+   the body itself, since the body's own padding is those insets and would go with them; and it is on the
+   tokens a consumer writes, so a panel of a host's own that insets its rows by `--bjs-entry-inset` is
+   reset by the same rule that resets an entry. Being custom properties, both reach any depth: an entry in
+   a list in a body, a body inside that body, a row a host draws itself. */
 .bjs-collapsible-entry-entries > * {
-  --bjs-entry-inset-left: 0;
+  --bjs-entry-inset: 0;
+  --bjs-control-gap: 0;
 }
 
 .bjs-collapsible-entry.bjs-open > .bjs-collapsible-entry-entries {
@@ -628,7 +631,7 @@ body.bjs-side-panel-resizing * {
 .bjs-simple-entry-content {
   flex: 1 1 auto;
   min-width: 0;
-  padding: 2px var(--bjs-entry-inset, 12px) 2px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+  padding: 2px var(--bjs-entry-inset, 12px) 2px var(--bjs-entry-inset, 12px);
 }
 
 .bjs-simple-entry-controls {
@@ -657,7 +660,7 @@ body.bjs-side-panel-resizing * {
   /* The table starts at the reading inset and ends at the control gap, since what stands at its right edge
      is a column of circular controls — the trash beside each row, and the footer's own below them — which
      therefore stand where a disclosure caret stands. The 6px above and below is a simple entry's. */
-  padding: 6px var(--bjs-control-gap, 4px) 6px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+  padding: 6px var(--bjs-control-gap, 4px) 6px var(--bjs-entry-inset, 12px);
   --bjs-table-row-h: 27px;         /* fixed header/row height, so the beside-table delete column lines up */
   --bjs-table-actions-w: 22px;     /* width of the beside-table delete column */
   --bjs-table-gap: 2px;            /* gap between the table and the delete column */
@@ -911,7 +914,7 @@ body.bjs-side-panel-resizing * {
 .bjs-ordered-list.bjs-list-separated > .bjs-ordered-list-row + .bjs-ordered-list-row::before {
   content: '';
   position: absolute;
-  left: var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+  left: var(--bjs-entry-inset, 12px);
   right: var(--bjs-entry-inset, 12px);
   top: 0;
   border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));

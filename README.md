@@ -189,9 +189,14 @@ Two more govern where the content of an entry sits, and a host retunes either wi
 other. `--bjs-entry-inset` is the reading inset, where a line of text starts and stops, and is 12px.
 `--bjs-control-gap` is the gap a circular control keeps from the edge of what holds it — a disclosure
 caret, a control a row carries, a reorder arrow — and is 4px, smaller than the reading inset because a
-22px circle carries an optical margin of its own. An entry pays both itself, so it is full-width and its
-insets are internal, and a container that has already paid the left inset for what stands in it says so
-with `--bjs-entry-inset-left: 0`, which is how the inset is paid once however deeply an entry is nested.
+22px circle carries an optical margin of its own.
+
+**The inset is paid once.** An entry is full-width and applies the inset inside itself, so what stands
+directly in a tab lines up whatever kind of entry it is; and a container that has applied it — the body of
+a collapsible entry — declares both tokens zero for everything it holds. Since they are custom properties
+that reaches any depth, an entry in a list in a body as much as a row a host draws itself, so a panel of a
+host's own insets its content with `padding-left: var(--bjs-entry-inset)` and is correct at every depth
+without knowing how deeply it has been nested. Nothing needs a negative margin to undo a second inset.
 
 ## License
 

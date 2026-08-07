@@ -5,7 +5,7 @@ export { default as createCollapsibleEntry } from './CollapsibleEntry.js';
 export { default as createControlButton } from './ControlButton.js';
 export { default as createSeparator } from './Separator.js';
 export {
-  default as createTableEntry, CREATE_SVG, DELETE_SVG, UPLOAD_SVG, DOWNLOAD_SVG
+  default as createTableEntry, CREATE_ICON, DELETE_ICON, LOAD_ICON, SAVE_ICON
 } from './TableEntry.js';
 export { default as createListEntry } from './ListEntry.js';
 export { default as createOrderedListEntry } from './OrderedListEntry.js';

@@ -9,7 +9,7 @@
  * the left, and on the right the table's own file controls beside a slot (`footerEl`) for a consumer's.
  *
  * **The table owns its file.** A table is rows under named columns, which is a CSV, so saving one and
- * loading one belong to the table and not to each host that draws it: `downloadable` and `uploadable`
+ * loading one belong to the table and not to each host that draws it: `savable` and `loadable`
  * give it the two controls, `filename` names what it saves and `separator` says how a cell is divided
  * from the next. A loaded file whose header names the table's own columns, trimmed and regardless of
  * case, has that header dropped and its remaining lines become the rows; one whose header names anything
@@ -40,9 +40,9 @@
  *        set the `--bjs-table-max-height` custom property instead.
  * @param {boolean} [options.addable=true]  render the add-row button + allow Enter-append
  * @param {boolean} [options.deletable=true]  render the beside-table delete column
- * @param {boolean} [options.downloadable=true]  render the download control, saving the rows as CSV
- * @param {boolean} [options.uploadable=true]  render the upload control, replacing the rows from a CSV
- * @param {string} [options.filename='table.csv']  what a download saves as, and what both controls name
+ * @param {boolean} [options.savable=true]  render the save control, writing the rows as a CSV
+ * @param {boolean} [options.loadable=true]  render the load control, replacing the rows from a CSV
+ * @param {string} [options.filename='table.csv']  what a save writes to, and what both controls name
  * @param {string} [options.separator=';']  what divides one cell from the next in that CSV
  * @param {Function} [options.onError]  (message) => void — a file refused for naming other columns
  *
@@ -67,8 +67,8 @@ export default function createTableEntry(options = {}) {
     maxHeight,
     addable = true,
     deletable = true,
-    downloadable = true,
-    uploadable = true,
+    savable = true,
+    loadable = true,
     filename = 'table.csv',
     separator = ';',
     onError
@@ -185,7 +185,7 @@ export default function createTableEntry(options = {}) {
       del.type = 'button';
       del.tabIndex = -1;
       del.title = 'Delete row';
-      del.innerHTML = DELETE_SVG;
+      del.innerHTML = DELETE_ICON;
       del.addEventListener('click', () => removeRow(tr));
       cell.appendChild(del);
       actionsBody.appendChild(cell);
@@ -318,7 +318,7 @@ export default function createTableEntry(options = {}) {
     const addBtn = el('button', 'bjs-table-add');
     addBtn.type = 'button';
     addBtn.title = addLabel; // label lives in the tooltip; the button is icon-only (properties-panel style)
-    addBtn.innerHTML = CREATE_SVG;
+    addBtn.innerHTML = CREATE_ICON;
     addBtn.addEventListener('click', () => addRow(null, true));
     footer.appendChild(addBtn);
   } else {
@@ -340,7 +340,7 @@ export default function createTableEntry(options = {}) {
     actions.appendChild(button);
   };
 
-  if (uploadable) {
+  if (loadable) {
     const file = el('input', '');
 
     file.type = 'file';
@@ -359,11 +359,11 @@ export default function createTableEntry(options = {}) {
       file.value = '';   // so that choosing the same file again is a change
     });
     actions.appendChild(file);
-    control(UPLOAD_SVG, 'Load ' + filename, () => file.click());
+    control(LOAD_ICON, 'Load ' + filename, () => file.click());
   }
 
-  if (downloadable) {
-    control(DOWNLOAD_SVG, 'Download ' + filename, () => {
+  if (savable) {
+    control(SAVE_ICON, 'Save ' + filename, () => {
       const link = el('a', '');
 
       link.href = URL.createObjectURL(new Blob([ getCsv() ], { type: 'text/csv' }));
@@ -387,22 +387,22 @@ export default function createTableEntry(options = {}) {
 // entry reads identically next to a Properties tab (create = plus, delete = trash; filled currentColor).
 // They are exported because a consumer drawing its own create or delete control must draw the same glyph:
 // one trash in the panel, whatever row carries it.
-export const CREATE_SVG =
+export const CREATE_ICON =
   '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
   '<path fill="currentColor" fill-rule="evenodd" d="M9,13 L9,9 L13,9 C13.5522847,9 14,8.55228475 14,8 ' +
   'C14,7.44771525 13.5522847,7 13,7 L9,7 L9,3 C9,2.44771525 8.55228475,2 8,2 C7.44771525,2 7,2.44771525 ' +
   '7,3 L7,7 L3,7 C2.44771525,7 2,7.44771525 2,8 C2,8.55228475 2.44771525,9 3,9 L7,9 L7,13 ' +
   'C7,13.5522847 7.44771525,14 8,14 C8.55228475,14 9,13.5522847 9,13 Z"/></svg>';
 
-// Load and save: Feather's upload and download, there being no properties-panel control
+// Load and save: Feather's upload and download glyphs, there being no properties-panel control
 // for either. They are the glyphs the applications hosting this panel already use for the same two acts,
 // so that saving means one thing wherever it is offered. They are exported for the same reason the other
 // two are: a consumer drawing its own load or save control draws the same glyph.
-export const UPLOAD_SVG = feather(
+export const LOAD_ICON = feather(
   '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/>' +
   '<line x1="12" y1="3" x2="12" y2="15"/>');
 
-export const DOWNLOAD_SVG = feather(
+export const SAVE_ICON = feather(
   '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/>' +
   '<line x1="12" y1="15" x2="12" y2="3"/>');
 
@@ -412,7 +412,7 @@ function feather(paths) {
     'focusable="false">' + paths + '</svg>';
 }
 
-export const DELETE_SVG =
+export const DELETE_ICON =
   // viewBox offset so the (off-centre) properties-panel trash path — content ~x:0-10, y:0-12.55 — is
   // centred in the button rather than sitting up-and-left.
   '<svg width="16" height="16" viewBox="-3 -1.7 16 16" aria-hidden="true" focusable="false">' +

@@ -163,7 +163,7 @@ export default function createOrderedListEntry(options = {}) {
     up.type = 'button';
     up.title = 'Move up';
     up.setAttribute('aria-label', 'Move up');
-    up.innerHTML = UP_SVG;
+    up.innerHTML = UP_ICON;
     // passive connector line between the arrows; grows on an expanded entry, collapses to nothing on a
     // short row (see .bjs-reorder-line). Purely decorative, so it carries no interaction.
     const line = el('div', 'bjs-reorder-line');
@@ -172,7 +172,7 @@ export default function createOrderedListEntry(options = {}) {
     down.type = 'button';
     down.title = 'Move down';
     down.setAttribute('aria-label', 'Move down');
-    down.innerHTML = DOWN_SVG;
+    down.innerHTML = DOWN_ICON;
     strip.append(up, line, down);
 
     up.addEventListener('click', (event) => { event.stopPropagation(); moveUp(key); });
@@ -221,8 +221,8 @@ export default function createOrderedListEntry(options = {}) {
 // Feather is drawn for a two-pixel stroke on a twenty-four-pixel grid, so at twelve pixels that stroke
 // renders at one and reads thin rather than light. What is kept across sizes is the weight and not the
 // number, so it is thickened here; the same glyph at sixteen keeps the two it was drawn with.
-const UP_SVG = arrow('<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>');
-const DOWN_SVG = arrow('<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>');
+const UP_ICON = arrow('<line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/>');
+const DOWN_ICON = arrow('<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>');
 
 function arrow(paths) {
   return '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +

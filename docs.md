@@ -46,7 +46,7 @@ Content the entry carries a control for:
 ```javascript
 const entry = createSimpleEntry({
   content: 'Item to remove',
-  controls: createControlButton({ icon: DELETE_SVG, title: 'Remove', onClick: () => remove() })
+  controls: createControlButton({ icon: DELETE_ICON, title: 'Remove', onClick: () => remove() })
 });
 parent.appendChild(entry.element);
 ```
@@ -250,9 +250,9 @@ A grid of editable text cells with add and delete controls. Rows are always arra
 | `maxHeight` | `number\|string` | undefined | CSS max-height (e.g. `'300px'`) |
 | `addable` | `boolean` | `true` | show the add-row button |
 | `deletable` | `boolean` | `true` | show delete controls |
-| `downloadable` | `boolean` | `true` | show the control that saves the rows as a CSV |
-| `uploadable` | `boolean` | `true` | show the control that replaces the rows from a CSV |
-| `filename` | `string` | `'table.csv'` | what a download saves as, and what both controls name |
+| `savable` | `boolean` | `true` | show the control that saves the rows as a CSV |
+| `loadable` | `boolean` | `true` | show the control that replaces the rows from a CSV |
+| `filename` | `string` | `'table.csv'` | what a save writes to, and what both controls name |
 | `separator` | `string` | `';'` | what divides one cell from the next in that CSV |
 | `onError` | `function` | undefined | called with a message when a loaded file names other columns |
 
@@ -294,8 +294,20 @@ since a file of another shape read positionally is worse than one not read at al
 so that a host may say which file it was. `getCsv` and `setCsv` are that same conversion without the
 controls, for a host that keeps the text somewhere of its own.
 
-Pass `downloadable: false` or `uploadable: false` where a table is not a file, and use `footerEl` for a
+Pass `savable: false` or `loadable: false` where a table is not a file, and use `footerEl` for a
 control of the host's own, which stands left of the table's.
+
+## The icons
+
+Four glyphs are exported beside the factories, `CREATE_ICON` and `DELETE_ICON` for adding and deleting a row
+and `LOAD_ICON` and `SAVE_ICON` for loading and saving a file. The table entry draws them itself; they
+are exported because a consumer that draws a control of the same kind must draw the same glyph, so that one
+trash means one thing throughout a panel however many hosts contribute to it.
+
+The two file glyphs are Feather's, which is what the applications hosting this panel draw with, so saving
+here and saving there are one act. The add and delete are `@bpmn-io/properties-panel`'s, taken so that a
+hosted properties panel and a host's own tab read as one panel, which is also why they are filled where the
+others are stroked. Both are credited in `LICENSE`.
 
 ## `createControlButton(options)`
 
@@ -334,7 +346,7 @@ Multiple controls:
 ```javascript
 const controls = [
   createControlButton({ title: 'Edit', icon: EDIT_SVG, onClick: edit }),
-  createControlButton({ title: 'Delete', icon: DELETE_SVG, onClick: del })
+  createControlButton({ title: 'Delete', icon: DELETE_ICON, onClick: del })
 ];
 
 const entry = createSimpleEntry({

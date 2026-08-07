@@ -90,7 +90,7 @@ export default function createCollapsibleEntry(options = {}) {
   // inert: disabled, out of the tab order, hidden from a reader, and toggling nothing.
   const arrow = el('button', 'bjs-collapsible-entry-arrow');
   arrow.type = 'button';
-  arrow.innerHTML = ARROW_SVG;
+  arrow.innerHTML = CARET_ICON;
   if (expandable) {
     arrow.setAttribute('aria-label', 'Toggle');
   } else {
@@ -159,7 +159,7 @@ export default function createCollapsibleEntry(options = {}) {
 // A right-pointing chevron; CSS rotates it 90° (→ down) when the entry is open. This is the exact
 // glyph @bpmn-io/properties-panel uses for its group/collapsible arrow (a filled L-bracket rotated
 // -45°) so the caret's weight and colour match a hosted Properties tab rather than reading lighter.
-const ARROW_SVG =
+const CARET_ICON =
   '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
   '<path fill="currentColor" fill-rule="evenodd" transform="rotate(-45 6 8)" ' +
   'd="M10,12 L3,12 C2.44771525,12 2,11.5522847 2,11 C2,10.4477153 2.44771525,10 3,10 ' +

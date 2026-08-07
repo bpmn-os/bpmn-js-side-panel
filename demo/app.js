@@ -26,7 +26,7 @@ import './demo.css';
 
 import diagramXML from './diagram.bpmn?raw';
 
-const CHAT_SVG = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"'
+const CHAT_ICON = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor"'
   + ' stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
   + '<path d="M1 14l1-4H1V3c0-1 1-2 2-2h10c1 0 2 1 2 2v7c0 1-1 2-2 2H4l-3 3z"/></svg>';
 
@@ -89,7 +89,7 @@ custom.body.appendChild(createSeparator());
 
 custom.body.appendChild(createSimpleEntry({
   content: 'A simple entry with a button.',
-  controls: createControlButton({ icon: CHAT_SVG, title: 'Say Hi', onClick: () => alert('Hello!') })
+  controls: createControlButton({ icon: CHAT_ICON, title: 'Say Hi', onClick: () => alert('Hello!') })
 }).element);
 
 custom.body.appendChild(createSeparator());

@@ -159,7 +159,6 @@ export default function createCollapsibleEntry(options = {}) {
 // A right-pointing chevron; CSS rotates it 90° (→ down) when the entry is open. This is the exact
 // glyph @bpmn-io/properties-panel uses for its group/collapsible arrow (a filled L-bracket rotated
 // -45°) so the caret's weight and colour match a hosted Properties tab rather than reading lighter.
-// It is theirs and MIT licensed; see LICENSE.
 const ARROW_SVG =
   '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
   '<path fill="currentColor" fill-rule="evenodd" transform="rotate(-45 6 8)" ' +

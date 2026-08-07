@@ -385,8 +385,8 @@ export default function createTableEntry(options = {}) {
 
 // The exact icons @bpmn-io/properties-panel uses for its list add / remove controls, so a hosted table
 // entry reads identically next to a Properties tab (create = plus, delete = trash; filled currentColor).
-// They are theirs and MIT licensed; see LICENSE. They are exported because a consumer drawing its own
-// create or delete control must draw the same glyph: one trash in the panel, whatever row carries it.
+// They are exported because a consumer drawing its own create or delete control must draw the same glyph:
+// one trash in the panel, whatever row carries it.
 export const CREATE_SVG =
   '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" focusable="false">' +
   '<path fill="currentColor" fill-rule="evenodd" d="M9,13 L9,9 L13,9 C13.5522847,9 14,8.55228475 14,8 ' +
@@ -394,7 +394,7 @@ export const CREATE_SVG =
   '7,3 L7,7 L3,7 C2.44771525,7 2,7.44771525 2,8 C2,8.55228475 2.44771525,9 3,9 L7,9 L7,13 ' +
   'C7,13.5522847 7.44771525,14 8,14 C8.55228475,14 9,13.5522847 9,13 Z"/></svg>';
 
-// Load and save: Feather's upload and download (MIT; see LICENSE), there being no properties-panel control
+// Load and save: Feather's upload and download, there being no properties-panel control
 // for either. They are the glyphs the applications hosting this panel already use for the same two acts,
 // so that saving means one thing wherever it is offered. They are exported for the same reason the other
 // two are: a consumer drawing its own load or save control draws the same glyph.

@@ -215,7 +215,7 @@ export default function createOrderedListEntry(options = {}) {
   };
 }
 
-// Feather's arrow-up and arrow-down (MIT; see LICENSE), which is the icon language the applications that
+// Feather's arrow-up and arrow-down, which is the icon language the applications that
 // host this panel already speak, rather than ad-hoc triangles.
 //
 // Feather is drawn for a two-pixel stroke on a twenty-four-pixel grid, so at twelve pixels that stroke

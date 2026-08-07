@@ -1,13 +1,7 @@
 MIT License
 
 Copyright (c) 2026 Asvin Goel
-
-Icons in `src/OrderedListEntry.js` and `src/TableEntry.js` are from Feather
-(https://feathericons.com): Copyright (c) 2013-2017 Cole Bemis, MIT licensed.
-
-Icons in `src/CollapsibleEntry.js` and `src/TableEntry.js` are from
-@bpmn-io/properties-panel: Copyright (c) 2020-present Camunda Services GmbH,
-MIT licensed.
+Copyright (c) 2013-2017 Cole Bemis (Feather icons)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

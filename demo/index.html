@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bpmn-js-side-panel</title>
+</head>
+<body>
+  <!-- The markup a host provides: a wrapper holding the canvas and the panel's slot, side by side. The
+       module stamps the layout classes on these two itself, so there is no layout CSS here. The wrapper
+       needs a height, which is the one thing a host must give it. -->
+  <div class="bpmn-ui">
+    <div class="canvas" id="canvas"></div>
+    <div class="side-panel" id="side-panel"></div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -12,15 +12,37 @@
  * `.bjs-side-panel-parent` to the slot. side-panel.css uses those to make the wrapper a flex row, grow
  * the canvas, and fix the panel width. The panel width (initial and drag-resize) is set here.
  *
+ * The panel is a grid of four children, and every name states the level it belongs to so that no word
+ * means two things:
+ *
+ *     bjs-panel                 the panel itself
+ *       bjs-panel-divider       its left edge, which resizes it; the first of the panel's dividers
+ *       bjs-panel-header        a slot spanning the panel, above everything
+ *       bjs-panel-body          the tab selectors and the tabs; the part that grows
+ *         bjs-panel-tabs        the selectors, which scroll horizontally when they crowd
+ *           bjs-tab-selector
+ *         bjs-tab               one per tab, of which one is active
+ *           bjs-tab-header      fixed at the head of the tab
+ *           bjs-tab-body        scrolls
+ *           bjs-tab-footer      fixed at the foot of the tab
+ *           bjs-tab-note        stands in for all three while a note is set
+ *       bjs-panel-footer        a slot spanning the panel, below everything
+ *
+ * The divider occupies the first grid column and spans every row, so it is the panel's full height, while
+ * the other three stack in the second column. A grid rather than nested elements is what lets the panel's
+ * own parts be siblings: an intermediate wrapper would have to be called a body, which is how the previous
+ * naming came to use one word for the panel's body and for a tab's.
+ *
  * - A `propertiesPanel` service, if present, is added as the first tab.
  * - Further tabs are added via `addTab()`.
- * - A left-edge drag handle resizes the panel. `canvas.resized()` fires afterward.
+ * - The divider resizes the panel by dragging. `canvas.resized()` fires afterward.
  *
  * Config (`sidePanel`):
  *   - parent:   selector or element for the panel slot (a flex sibling of the canvas in the wrapper).
- *   - header:   optional content (HTML string or element) shown above the tabs.
+ *   - header:   optional content (HTML string or element) shown in the panel's header.
  *   - width:    initial panel width (CSS value, default '300px').
- *   - minWidth: minimum width in px during resize (default 180).
+ *   - minWidth: minimum content width in px during resize, beside the divider (default none, so the
+ *               panel collapses to its divider; a double click on the divider collapses and restores it).
  */
 export default class SidePanel {
   constructor(config, injector, eventBus, canvas) {
@@ -50,32 +72,35 @@ export default class SidePanel {
     parent.classList.add('bjs-side-panel-parent');
     parent.style.width = this._config.width || '300px';
 
-    const container = this._container = el('div', 'bjs-side-panel');
+    const container = this._container = el('div', 'bjs-panel');
 
-    // left-edge resize handle
-    const handle = el('div', 'bjs-side-panel-resize-handle');
-    container.appendChild(handle);
-    this._setupResize(handle);
+    // the panel's left edge, which resizes it: the first of its dividers
+    const divider = el('div', 'bjs-panel-divider');
+    container.appendChild(divider);
+    this._setupResize(divider);
 
-    const body = el('div', 'bjs-side-panel-body');
-    container.appendChild(body);
+    // The header and the footer are slots spanning the panel, and both are built whether or not anything
+    // is put in them: an empty slot is a row of no height, and a slot that exists only sometimes is one a
+    // host cannot fill later.
+    this._header = el('div', 'bjs-panel-header');
+    container.appendChild(this._header);
 
-    // optional header / logo slot at the top, spanning the body width
     if (this._config.header) {
-      const header = el('div', 'bjs-side-panel-header');
       if (typeof this._config.header === 'string') {
-        header.innerHTML = this._config.header;
+        this._header.innerHTML = this._config.header;
       } else {
-        header.appendChild(this._config.header);
+        this._header.appendChild(this._config.header);
       }
-      body.appendChild(header);
     }
 
-    this._tabBar = el('div', 'bjs-side-panel-tabs');
-    body.appendChild(this._tabBar);
+    this._body = el('div', 'bjs-panel-body');
+    container.appendChild(this._body);
 
-    this._panes = el('div', 'bjs-side-panel-panes');
-    body.appendChild(this._panes);
+    this._tabBar = el('div', 'bjs-panel-tabs');
+    this._body.appendChild(this._tabBar);
+
+    this._footer = el('div', 'bjs-panel-footer');
+    container.appendChild(this._footer);
 
     parent.appendChild(container);
 
@@ -101,37 +126,41 @@ export default class SidePanel {
   }
 
   /**
-   * Add a tab. The side panel owns the tab structure: a scrolling `body` above a fixed `footer`. Both
-   * hold a sequence of entries (createCollapsibleEntry / createPlainEntry) and separators (createSeparator).
+   * Add a tab. The side panel owns the tab structure: a fixed `header`, a scrolling `body` and a fixed
+   * `footer`. All three hold a sequence of entries (createSimpleEntry / createCollapsibleEntry) and
+   * separators (createSeparator); a heading put in the header stays while the body scrolls under it.
    *
    * @param {Object} options
    * @param {string} options.id
    * @param {string} options.label
    * @param {number} [options.priority=0]  higher priority tabs are placed first
-   * @return {{ body: HTMLElement, footer: HTMLElement }} the tab's scroll body and fixed footer
+   * @return {{ header: HTMLElement, body: HTMLElement, footer: HTMLElement }} the tab's three slots: a
+   *         heading and a footer that stay put, and a body that scrolls between them
    */
   addTab({ id, label, priority = 0 }) {
     if (this.getTab(id)) {
       throw new Error('tab <' + id + '> already exists');
     }
 
-    const button = el('button', 'bjs-side-panel-tab');
+    const button = el('button', 'bjs-tab-selector');
     button.type = 'button';
     button.textContent = label;
     button.setAttribute('data-tab', id);
     button.addEventListener('click', () => this.activate(id));
 
-    const pane = el('div', 'bjs-side-panel-pane');
+    const pane = el('div', 'bjs-tab');
     pane.setAttribute('data-tab', id);
-    const body = el('div', 'bjs-side-panel-body');     // scrolls; holds entries + separators
-    const footer = el('div', 'bjs-side-panel-footer');  // fixed at the bottom; holds entries + separators
-    const note = el('div', 'bjs-side-panel-note');      // shown in place of both while a note is set
+    const header = el('div', 'bjs-tab-header');  // fixed at the head of the tab; holds entries + separators
+    const body = el('div', 'bjs-tab-body');     // scrolls; holds entries + separators
+    const footer = el('div', 'bjs-tab-footer');  // fixed at the foot of the tab; holds entries + separators
+    const note = el('div', 'bjs-tab-note');      // shown in place of all three while a note is set
     note.style.display = 'none';
+    pane.appendChild(header);
     pane.appendChild(body);
     pane.appendChild(footer);
     pane.appendChild(note);
 
-    this._tabs.push({ id, label, priority, button, pane, body, footer, note });
+    this._tabs.push({ id, label, priority, button, pane, header, body, footer, note });
     this._tabs.sort((a, b) => b.priority - a.priority);
 
     this._renderTabs();
@@ -140,7 +169,7 @@ export default class SidePanel {
       this.activate(id);
     }
 
-    return { body, footer };
+    return { header, body, footer };
   }
 
   removeTab(id) {
@@ -194,6 +223,7 @@ export default class SidePanel {
     if (note == null) {
       tab.note.replaceChildren();
       tab.note.style.display = 'none';
+      tab.header.style.display = '';
       tab.body.style.display = '';
       tab.footer.style.display = '';
 
@@ -207,8 +237,23 @@ export default class SidePanel {
     }
 
     tab.note.style.display = '';
+    tab.header.style.display = 'none';
     tab.body.style.display = 'none';
     tab.footer.style.display = 'none';
+  }
+
+  /**
+   * The panel's own slots, spanning it whichever tab is shown.
+   *
+   * They are elements the host fills rather than content given at construction, exactly as a tab's are:
+   * what governs a run belongs in the panel's footer, and such a thing changes while the run does, so a
+   * slot that could be filled only once could never hold it. The `header` config remains as a convenience
+   * for a host with nothing to change.
+   *
+   * @return {{ header: HTMLElement, footer: HTMLElement }}
+   */
+  getSlots() {
+    return { header: this._header, footer: this._footer };
   }
 
   getTab(id) {
@@ -220,20 +265,25 @@ export default class SidePanel {
     // (re)insert buttons and panes in priority order
     this._tabs.forEach(tab => {
       this._tabBar.appendChild(tab.button);
-      this._panes.appendChild(tab.pane);
+      this._body.appendChild(tab.pane);
     });
 
     // hide the tab bar when there is nothing to switch between
     this._tabBar.style.display = this._tabs.length > 1 ? '' : 'none';
   }
 
-  _setupResize(handle) {
-    const minWidth = this._config.minWidth || 180;
+  _setupResize(divider) {
+    // No floor unless a host asks for one. The panel collapses to its divider, which is the same rule a
+    // column will obey when it collapses to its own: there is one way to put something away and one thing
+    // left behind to bring it back, rather than a rule and an exception. A host that needs a floor states
+    // it; the package does not choose a number on its behalf.
+    const minWidth = this._config.minWidth || 0;
+    const dividerWidth = () => divider.getBoundingClientRect().width;
     let startX, startWidth;
 
     const onMove = (event) => {
       // dragging the left edge to the left widens the panel
-      const width = Math.max(minWidth, startWidth + (startX - event.clientX));
+      const width = Math.max(minWidth + dividerWidth(), startWidth + (startX - event.clientX));
       this._parent.style.width = width + 'px';
     };
 
@@ -246,7 +296,26 @@ export default class SidePanel {
       }
     };
 
-    handle.addEventListener('pointerdown', (event) => {
+    // Collapsed and back again, since dragging an eleven-pixel strip is possible but unkind and the reader
+    // should not have to remember a width. The width it had is what it returns to.
+    divider.addEventListener('dblclick', () => {
+      const width = this._parent.getBoundingClientRect().width;
+      const collapsed = width <= dividerWidth() + 1;
+
+      this._parent.style.width = collapsed
+        ? (this._restoreWidth || this._config.width || '300px')
+        : dividerWidth() + 'px';
+
+      if (!collapsed) {
+        this._restoreWidth = width + 'px';
+      }
+
+      if (this._canvas && this._canvas.resized) {
+        this._canvas.resized();
+      }
+    });
+
+    divider.addEventListener('pointerdown', (event) => {
       event.preventDefault();
       startX = event.clientX;
       startWidth = this._parent.getBoundingClientRect().width;

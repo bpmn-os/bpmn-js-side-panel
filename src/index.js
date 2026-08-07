@@ -2,9 +2,11 @@ import SidePanel from './SidePanel.js';
 
 export { default as createSimpleEntry } from './SimpleEntry.js';
 export { default as createCollapsibleEntry } from './CollapsibleEntry.js';
-export { default as createPlainEntry } from './PlainEntry.js';
+export { default as createControlButton } from './ControlButton.js';
 export { default as createSeparator } from './Separator.js';
-export { default as createTableEntry, CREATE_SVG, DELETE_SVG } from './TableEntry.js';
+export {
+  default as createTableEntry, CREATE_SVG, DELETE_SVG, UPLOAD_SVG, DOWNLOAD_SVG
+} from './TableEntry.js';
 export { default as createListEntry } from './ListEntry.js';
 export { default as createOrderedListEntry } from './OrderedListEntry.js';
 
@@ -18,8 +20,7 @@ export { default as createOrderedListEntry } from './OrderedListEntry.js';
  *   });
  *   const sidePanel = modeler.get('sidePanel');
  *   const { body, footer } = sidePanel.addTab({ id: 'issues', label: 'Issues' });
- *   // fill `body`/`footer` with createSimpleEntry / createCollapsibleEntry / createPlainEntry /
- *   // createSeparator entries
+ *   // fill `body`/`footer` with createSimpleEntry / createCollapsibleEntry / createSeparator entries
  */
 export default {
   __init__: [ 'sidePanel' ],

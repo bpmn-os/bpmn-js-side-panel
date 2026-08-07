@@ -12,11 +12,23 @@
   --bjs-grey-97: hsl(225, 10%, 97%);
   --bjs-accent: hsl(205, 100%, 45%);
   --bjs-accent-strong: hsl(205, 100%, 50%);
-  /* Horizontal inset for entry content (a collapsible title/body, or a plain entry), owned by the side
-     panel so every entry in every tab lines up. Entries themselves are FULL-WIDTH — this inset is applied
-     inside them (header + body) — so hosts never need negative-margin breakouts and full-width dividers
-     and backgrounds are trivial. Consumers align their own content to this token, not a container padding. */
+  /* Horizontal inset for entry content, owned by the side panel so every entry in every tab lines up.
+     Entries themselves are FULL-WIDTH — this inset is applied inside them (header + body) — so hosts never
+     need negative-margin breakouts and full-width dividers and backgrounds are trivial. Consumers align
+     their own content to this token, not a container padding.
+
+     It says where text starts and stops, and nothing else. Where a circular control sits is the other
+     token, `--bjs-control-gap`: a caret, a control a row carries and a reorder arrow all keep that gap
+     from the edge of what holds them, which is smaller than a reading inset because a 22px circle already
+     carries its own optical margin. One value for the two would put a control's circle where a line of
+     text stops, which reads as a control pushed inward rather than as a column of controls.
+
+     A container that has already paid the left inset for what stands in it — the body of a collapsible
+     entry — says so with `--bjs-entry-inset-left: 0`, so the inset is paid once however deeply an entry
+     is nested. There is no matching right-hand token: a container pays nothing on the right, so that a
+     control keeps its gap from the panel's edge rather than from the container's. */
   --bjs-entry-inset: 12px;
+  --bjs-control-gap: 4px;
 }
 
 /* Two-pane layout. The module stamps `.bjs-layout` on the wrapper and `.bjs-side-panel-parent` on the
@@ -39,18 +51,28 @@
   min-width: 0;
 }
 
-.bjs-side-panel {
-  display: flex;
-  flex-direction: row;
+/* The panel is a grid of four: its divider in the first column spanning every row, and its header, body
+   and footer stacked in the second. A grid rather than nested elements is what lets the panel's own parts
+   be siblings — an intermediate wrapper would have to be called a body, which is how one word came to name
+   both the panel's body and a tab's. */
+.bjs-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   height: 100%;
   box-sizing: border-box;
-  background-color: #f8f8f8; /* the panel backdrop (matches the resize handle) */
+  background-color: #f8f8f8; /* the panel backdrop (matches the divider) */
 }
 
-/* left-edge resize handle: 10px grip (gray fill, triple-dash) + 1px gray right border;
-   the white canvas on the left gives the 3D look. Width is 10px + the 1px border. */
-.bjs-side-panel-resize-handle {
-  flex: 0 0 11px;
+/* The panel's left edge, which resizes it: a 10px grip (gray fill, triple-dash) with a 1px gray right
+   border, the white canvas on the left giving the 3D look. Width is 10px plus the border. It spans every
+   row, so it is the panel's full height. */
+.bjs-panel-divider {
+  grid-column: 1;
+  grid-row: 1 / -1;
+  /* A grid item, so its own width rather than a flex basis: the column is sized from this. Without it the
+     column takes its content, and the content is a background image, so the divider is its border alone. */
+  width: 11px;
   box-sizing: border-box;
   cursor: col-resize;
   background-color: #f8f8f8;
@@ -61,8 +83,11 @@
   user-select: none;
 }
 
-.bjs-side-panel-header {
-  flex: 0 0 auto;
+/* The panel's slots, above and below everything. Both are built whether or not a host fills one, so that
+   a host may fill either later; an empty one takes no room and draws nothing. */
+.bjs-panel-header {
+  grid-column: 2;
+  grid-row: 1;
   display: flex;
   align-items: center;
   padding: 10px 12px;
@@ -70,30 +95,60 @@
   border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
+.bjs-panel-footer {
+  grid-column: 2;
+  grid-row: 3;
+  background-color: var(--bjs-grey-97, hsl(225, 10%, 97%));
+  border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+}
+
+.bjs-panel-header:empty,
+.bjs-panel-footer:empty {
+  display: none;
+}
+
 /* a note standing in for a tab's content (see SidePanel#setNote) */
-.bjs-side-panel-note {
+.bjs-tab-note {
   padding: 16px 12px;
   color: var(--bjs-grey-35, hsl(225, 10%, 35%));
   font-size: 13px;
   line-height: 1.8;
 }
 
-.bjs-side-panel-body {
-  flex: 1 1 auto;
+/* The panel's body: the tab selectors above the tabs, of which one is shown. */
+.bjs-panel-body {
+  grid-column: 2;
+  grid-row: 2;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* the active tab's body scrolls, not this container */
 }
 
-.bjs-side-panel-tabs {
+/* The selectors scroll rather than shrink past reading: a panel narrow enough to crowd them is ordinary,
+   and a selector squeezed to nothing says less than one scrolled out of sight. The scrollbar is hidden,
+   which is why the ends fade — a scrolling strip with no visual hint is a thing readers do not find. */
+.bjs-panel-tabs {
   flex: 0 0 auto;
   display: flex;
-  border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
 }
 
-.bjs-side-panel-tab {
-  flex: 1;
+.bjs-panel-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.bjs-tab-selector {
+  flex: 1 1 0;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 8px 10px;
   background: none;
   border: none;
@@ -103,43 +158,68 @@
   cursor: pointer;
 }
 
-.bjs-side-panel-tab:hover {
+.bjs-tab-selector:hover {
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
 }
 
-.bjs-side-panel-tab.active {
+.bjs-tab-selector.active {
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
   font-weight: bold;
   border-bottom-color: var(--bjs-side-panel-accent, var(--bjs-accent-strong, hsl(205, 100%, 50%)));
 }
 
-.bjs-side-panel-panes {
+/* a tab is a scrolling body between a fixed header and a fixed footer — all three owned by the side
+   panel, all three holding a sequence of entries + separators */
+.bjs-tab {
+  display: none;
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden; /* the active pane's body scrolls, not this container */
-}
-
-/* a pane is a scrolling body above a fixed footer — both owned by the side panel, both holding a
-   sequence of entries + separators */
-.bjs-side-panel-pane {
-  display: none;
-  height: 100%;
   flex-direction: column;
+  border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
-.bjs-side-panel-pane.active {
+.bjs-tab.active {
   display: flex;
 }
 
-.bjs-side-panel-body {
+/* A tab's header and footer mirror `bio-properties-panel-header`, so that a tab of a host's own and the
+   properties panel's tab read as one panel: the same grey field, the same rule beneath it, the same text
+   size. There is no footer in the properties panel, so a tab's footer mirrors its header rather than
+   inventing an appearance of its own, with the rule above it instead of below. */
+.bjs-tab-header,
+.bjs-tab-footer {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  height: 64px;                 /* as `bio-properties-panel-header` stands */
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 14px;
+  background-color: var(--bjs-grey-95, hsl(225, 10%, 95%));
+  overflow: hidden;
+  /* the band supplies the inset, so an entry standing in it does not add a second one */
+  --bjs-entry-inset: 0;
+}
+
+.bjs-tab-header {
+  border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+}
+
+.bjs-tab-footer {
+  border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
+}
+
+.bjs-tab-header:empty,
+.bjs-tab-footer:empty {
+  display: none;
+}
+
+.bjs-tab-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-}
-
-.bjs-side-panel-footer {
-  flex: 0 0 auto;
 }
 
 /* suppress text selection / show resize cursor while dragging the handle */
@@ -162,23 +242,43 @@ body.bjs-side-panel-resizing * {
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
 }
 
-/* Every entry (collapsible or plain) is FULL-WIDTH; its horizontal inset lives inside (header + body),
-   so hosts never need negative-margin breakouts and full-width separators/backgrounds are trivial.
-   Entries stack flush; division between them is an explicit `.bjs-separator` the consumer places, so
-   entries can also sit directly next to each other with no separation when that is wanted. */
+/* Every entry is FULL-WIDTH; its horizontal inset lives inside (header + body), so hosts never need
+   negative-margin breakouts and full-width separators/backgrounds are trivial.
 
-/* The summary row both row-shaped entries are built on: the collapsible entry's header and the whole
-   of a simple entry. One definition, so a row is the same row whether or not it discloses. */
-.bjs-collapsible-entry-header,
-.bjs-simple-entry-row {
+   Every entry carries `bjs-entry`, whichever kind it is — simple, collapsible, list or table — and that
+   is what these rules select on, so an entry of a kind added later takes the field without a rule of its
+   own. A kind that carries only its own class takes the panel's backdrop instead, which is what a list
+   and a table did before they were given it.
+
+   An entry takes the field of the slot it stands in. In a tab's body it is white, as
+   `bio-properties-panel-group` is, so the content of a tab reads as the properties panel's does while the
+   space below the last entry keeps the panel's own grey. In a header or a footer it takes that band's
+   grey, so a heading is part of its band rather than a white row laid over it. */
+.bjs-tab-body > .bjs-entry {
+  background-color: #fff;
+}
+
+.bjs-tab-header > .bjs-entry,
+.bjs-tab-footer > .bjs-entry {
+  background-color: var(--bjs-grey-95, hsl(225, 10%, 95%));
+}
+
+.bjs-panel-header > .bjs-entry,
+.bjs-panel-footer > .bjs-entry {
+  background-color: var(--bjs-grey-97, hsl(225, 10%, 97%));
+}
+
+/* The collapsible entry's summary row: the label takes the width, the controls are held to its right,
+   and the caret closes it. The label is one line and truncates, since this row is what stands for the
+   entry while it is shut. */
+.bjs-collapsible-entry-header {
   display: flex;
   align-items: center;
   gap: 4px;
   min-height: 26px;
-  /* Internal inset: the title starts at the shared inset; the caret keeps its own 4px gap from the right
-     edge. Both are owned here (not by the consumer) so every entry in every tab lines up identically.
-     A simple entry has no caret, so its title runs to the right inset instead of stopping short of one. */
-  padding: 2px 4px 2px var(--bjs-entry-inset, 12px);
+  /* Internal inset: the label starts at the reading inset, the caret keeps the control gap. Both are owned
+     here (not by the consumer) so every entry in every tab lines up identically. */
+  padding: 2px var(--bjs-control-gap, 4px) 2px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
   line-height: 1.4;
   user-select: none;
 }
@@ -187,8 +287,7 @@ body.bjs-side-panel-resizing * {
   cursor: pointer;
 }
 
-.bjs-collapsible-entry-title,
-.bjs-simple-entry-title {
+.bjs-collapsible-entry-title {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -196,8 +295,7 @@ body.bjs-side-panel-resizing * {
   white-space: nowrap;
 }
 
-.bjs-collapsible-entry-title.bjs-empty,
-.bjs-simple-entry-title.bjs-empty {
+.bjs-collapsible-entry-title.bjs-empty {
   color: var(--bjs-grey-55, hsl(225, 10%, 55%));
   font-style: italic;
 }
@@ -267,6 +365,27 @@ body.bjs-side-panel-resizing * {
   padding-left: 0;
 }
 
+/* A control button — small, circular, with icon centering and hover highlight.
+   Used in entry control slots and other contexts where a compact control is needed. */
+.bjs-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 11px;
+  background: none;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.bjs-control:hover {
+  background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
+}
+
 /* A control a row carries: the shape is the panel's, what it does and when it shows is the consumer's.
    Visible by default, since a control a reader must act on cannot hide; add `bjs-entry-control-quiet`
    for the properties-panel feel, where a removal appears on hover or focus. */
@@ -291,8 +410,8 @@ body.bjs-side-panel-resizing * {
 
 .bjs-collapsible-entry-header:hover .bjs-entry-control-quiet,
 .bjs-collapsible-entry-header:focus-within .bjs-entry-control-quiet,
-.bjs-simple-entry-row:hover .bjs-entry-control-quiet,
-.bjs-simple-entry-row:focus-within .bjs-entry-control-quiet {
+.bjs-simple-entry:hover .bjs-entry-control-quiet,
+.bjs-simple-entry:focus-within .bjs-entry-control-quiet {
   visibility: visible;
 }
 
@@ -301,12 +420,24 @@ body.bjs-side-panel-resizing * {
   background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
-/* expanded body: hidden until open. Its left inset matches the header (title); the right inset matches
-   the caret's optical gap (the header's 4px padding-right). caret-left drops the left inset above. */
+/* Expanded body: hidden until open. Its left inset matches the header's label, so what it holds stands
+   under what names it; caret-left drops that inset below. It pays nothing on the right, so a control
+   standing in it keeps its gap from the panel's edge rather than from the body's, and the controls of the
+   entries it holds stand in one column with the caret of the entry that holds them. */
 .bjs-collapsible-entry-entries {
   display: none;
   /* 10px bottom padding gives the expanded body breathing room above whatever follows */
-  padding: 0 4px 10px var(--bjs-entry-inset, 12px);
+  padding: 0 0 10px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+}
+
+/* The body has paid the left inset, so an entry standing in it does not pay it again, exactly as a tab's
+   header and footer do for what stands in them. The reset is on what the body holds rather than on the
+   body itself, since the body's own padding is that inset and would go with it. It is inherited, so it
+   reaches an entry held in a list held in the body as it reaches one held directly, and an entry nested
+   more deeply still pays the inset once. The right side is not reset, the body having paid nothing
+   there. */
+.bjs-collapsible-entry-entries > * {
+  --bjs-entry-inset-left: 0;
 }
 
 .bjs-collapsible-entry.bjs-open > .bjs-collapsible-entry-entries {
@@ -327,12 +458,35 @@ body.bjs-side-panel-resizing * {
   outline-offset: -1px;
 }
 
-/* Plain entry — a full-width, internally-inset container for non-collapsible content (the consumer fills
-   it). Same inset as a collapsible title/body so plain and collapsible entries line up. */
-.bjs-plain-entry {
-  font-size: 13px;
-  color: var(--bjs-grey-15, hsl(225, 10%, 15%));
-  padding: 6px var(--bjs-entry-inset, 12px);
+/* Simple entry — the content it holds beside the controls that act on it. The content takes the width
+   and runs over as many lines as it needs, so it wraps where a collapsible entry's label truncates; the
+   controls are held to the right of it, at the top, where the first line of the content is.
+
+   The horizontal inset is the content's own rather than the entry's, so that the content stops at the
+   reading inset while the controls keep the control gap, and a control and a caret stand in one column.
+   The entry's 4px above and the content's own 2px make the 6px a plain box of content has, and set the
+   first line's centre on the centre of a 22px control beside it. */
+.bjs-simple-entry {
+  display: flex;
+  align-items: flex-start;
+  padding: 4px 0;
+  line-height: 1.4;
+}
+
+.bjs-simple-entry-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 2px var(--bjs-entry-inset, 12px) 2px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+}
+
+.bjs-simple-entry-controls {
+  padding-right: var(--bjs-control-gap, 4px);
+}
+
+/* An entry carrying no control holds no slot: the slot is built regardless, so that a consumer may fill
+   it later, and takes no room until it is filled. */
+.bjs-simple-entry-controls:empty {
+  display: none;
 }
 
 /* Separator — an explicit full-width divider the consumer places between entries. Full width is trivial
@@ -348,6 +502,10 @@ body.bjs-side-panel-resizing * {
 .bjs-table-entry {
   font-size: 13px;
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
+  /* The table starts at the reading inset and ends at the control gap, since what stands at its right edge
+     is a column of circular controls — the trash beside each row, and the footer's own below them — which
+     therefore stand where a disclosure caret stands. The 6px above and below is a simple entry's. */
+  padding: 6px var(--bjs-control-gap, 4px) 6px var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
   --bjs-table-row-h: 27px;         /* fixed header/row height, so the beside-table delete column lines up */
   --bjs-table-actions-w: 22px;     /* width of the beside-table delete column */
   --bjs-table-gap: 2px;            /* gap between the table and the delete column */
@@ -529,16 +687,24 @@ body.bjs-side-panel-resizing * {
   margin-right: calc(var(--bjs-table-actions-w) + var(--bjs-table-gap));
 }
 
-.bjs-table-footer-actions {
+.bjs-table-footer-actions,
+.bjs-table-footer-slot {
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+/* the consumer's slot takes no room while it holds nothing, so the table's own controls do not sit a gap
+   away from where they would otherwise be */
+.bjs-table-footer-slot:empty {
+  display: none;
+}
+
 /* footer buttons: icon-only, with a circular hover highlight — the properties-panel control style. The
    label lives in the button's tooltip (title). Consumer buttons in the actions slot inherit this. */
 .bjs-table-add,
-.bjs-table-footer-actions > button {
+.bjs-table-footer-actions > button,
+.bjs-table-footer-slot > button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -553,13 +719,15 @@ body.bjs-side-panel-resizing * {
 }
 
 .bjs-table-add:hover,
-.bjs-table-footer-actions > button:hover {
+.bjs-table-footer-actions > button:hover,
+.bjs-table-footer-slot > button:hover {
   color: var(--bjs-grey-15, hsl(225, 10%, 15%));
   background: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
 .bjs-table-add svg,
-.bjs-table-footer-actions > button svg {
+.bjs-table-footer-actions > button svg,
+.bjs-table-footer-slot > button svg {
   width: 16px;
   height: 16px;
 }
@@ -578,12 +746,22 @@ body.bjs-side-panel-resizing * {
   margin-top: 5px;
 }
 
-/* optional separators (`separators: true` / `setSeparators`): entries sit flush with a hairline
-   between them, the same 1px grey-75 rule as createSeparator and properties-panel's group border.
-   Issues-style lists turn this on; token lists leave it off (the spaced default above). */
+/* Optional separators (`separators: true` / `setSeparators`): items sit flush with a hairline between
+   them. The rule is inset to the entry inset rather than run to the panel's edges, because a full-width
+   rule is what divides one entry from the next, and an item within an entry is not that. */
 .bjs-list.bjs-list-separated > * + *,
 .bjs-ordered-list.bjs-list-separated > .bjs-ordered-list-row + .bjs-ordered-list-row {
   margin-top: 0;
+  position: relative;
+}
+
+.bjs-list.bjs-list-separated > * + *::before,
+.bjs-ordered-list.bjs-list-separated > .bjs-ordered-list-row + .bjs-ordered-list-row::before {
+  content: '';
+  position: absolute;
+  left: var(--bjs-entry-inset-left, var(--bjs-entry-inset, 12px));
+  right: var(--bjs-entry-inset, 12px);
+  top: 0;
   border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
@@ -618,17 +796,12 @@ body.bjs-side-panel-resizing * {
   display: none;
   flex-direction: column;
   align-items: center;
-  /* border-box + 20px width = a 16px content lane (the arrow's size) plus a 4px outer gap, so the
-     arrow circle keeps the same gap from the panel edge that the disclosure caret keeps on its side
-     (the header's 4px padding-right). Explicit box-sizing so an inherited border-box can't shrink it. */
+  /* border-box + 16px width = the arrows' lane and nothing besides: the strip keeps no gap of its own,
+     the gap being the inset of whatever holds the list, as it is for every other entry. Explicit
+     box-sizing so an inherited border-box can't shrink it. */
   box-sizing: border-box;
-  width: 20px;
-  padding: 2px 0 2px 4px;
-}
-
-/* right-hand strip: mirror the outer gap to the right edge */
-.bjs-ordered-list.bjs-strip-right > .bjs-ordered-list-row > .bjs-reorder-strip {
-  padding: 2px 4px 2px 0;
+  width: 16px;
+  padding: 2px 0;
 }
 
 .bjs-ordered-list.bjs-reordering > .bjs-ordered-list-row > .bjs-reorder-strip {

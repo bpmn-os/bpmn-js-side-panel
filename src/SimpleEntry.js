@@ -1,46 +1,34 @@
-import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
+import { contentSetter, el, makeClickable } from './entryUtil.js';
 
 /**
- * Plain-DOM **summary row** — one line of an entry list that discloses nothing.
+ * Plain-DOM simple entry — the content it holds, and a slot for the controls that act on it.
  *
- * It is the collapsible entry's header without the caret and without the body, drawn from the same
- * helper so the two cannot drift: a label slot that takes the width and a controls slot held to its
- * right, holding whatever controls the row carries. Because it has no disclosure at all, the label runs
- * the full width of the entry rather than stopping short of a caret's space.
+ * A simple entry discloses nothing: everything it holds is shown, always. Its content takes the width
+ * and runs over as many lines as it needs, and the controls slot is held to its right, clear of the
+ * content and taking no width while it holds none. An entry that shows some of what it holds only when
+ * it is opened is a collapsible entry instead.
  *
- * Which of the three to reach for. **This one** for a row that never opens, in a list where nothing
- * opens: a token in a panel that shows no detail, a message, a name with a value beside it. A
- * **collapsible entry** for a row that opens, and also for one that cannot open but stands among rows
- * that can, which is what its `expandable: false` is for: such a row keeps the caret's space so the
- * list holds one alignment. A **plain entry** when what is wanted is not a row at all but a
- * full-width box to fill with content of the consumer's own, a note or a hint.
- *
- * Live updates: mutate `summaryEl` (or what was put in it) directly, or call `setLabel`. The element
- * is the same node throughout, so nothing is rebuilt and a click target never moves under the pointer.
+ * The content is a string, an element, or a list of elements, and `setContent` replaces it in place, so
+ * an entry that is kept is updated rather than rebuilt. The controls are the consumer's own elements:
+ * the slot holds them and gives them their place, and what they are and what they do is the consumer's.
+ * A click in the slot stops there, so a control never also fires the click the entry itself carries.
  *
  * @param {Object} [options]
- * @param {string} [options.id]              stamped as data-entry-id
- * @param {string|Node} [options.label]      the row's content, a string or an element
- * @param {Function} [options.onClick]       when given, the whole row is clickable
- * @param {Node|Node[]} [options.controls]   controls the row carries, held right of the label
- * @param {string} [options.emptyLabel='<empty>'] placeholder shown when `label` is empty
+ * @param {string} [options.id]                  stamped as data-entry-id
+ * @param {string|Node|Node[]} [options.content] what the entry holds
+ * @param {Node|Node[]} [options.controls]       controls the entry carries, held to the right of it
+ * @param {Function} [options.onClick]           when given, the whole entry is clickable
  *
  * @return {{
  *   element: HTMLElement,
- *   summaryEl: HTMLElement,
+ *   contentEl: HTMLElement,
  *   controlsEl: HTMLElement,
- *   setLabel: (function((string|Node)): void),
+ *   setContent: (function((string|Node|Node[]|null)): void),
  *   destroy: (function(): void)
  * }}
  */
 export default function createSimpleEntry(options = {}) {
-  const {
-    id,
-    label,
-    onClick,
-    controls,
-    emptyLabel = '<empty>'
-  } = options;
+  const { id, content, controls, onClick } = options;
 
   const element = el('div', 'bjs-entry bjs-simple-entry');
   makeClickable(element, onClick);
@@ -48,16 +36,17 @@ export default function createSimpleEntry(options = {}) {
     element.setAttribute('data-entry-id', id);
   }
 
-  const { row, titleEl, controlsEl } = buildEntryRow({
-    rowClass: 'bjs-simple-entry-row',
-    titleClass: 'bjs-simple-entry-title',
-    controlsClass: 'bjs-simple-entry-controls',
-    controls
-  });
-  element.appendChild(row);
+  const contentEl = el('div', 'bjs-simple-entry-content');
+  element.appendChild(contentEl);
 
-  const setLabel = labelSetter(titleEl, emptyLabel);
-  setLabel(label);
+  const setContent = contentSetter(contentEl);
+  setContent(content);
+
+  const controlsEl = el('div', 'bjs-simple-entry-controls');
+  controlsEl.addEventListener('click', (event) => event.stopPropagation());
+  element.appendChild(controlsEl);
+
+  [].concat(controls || []).forEach((control) => control && controlsEl.appendChild(control));
 
   const destroy = () => {
     if (element.parentNode) {
@@ -65,5 +54,5 @@ export default function createSimpleEntry(options = {}) {
     }
   };
 
-  return { element, summaryEl: titleEl, controlsEl, setLabel, destroy };
+  return { element, contentEl, controlsEl, setContent, destroy };
 }

@@ -71,7 +71,7 @@
 
   <script type="module">
     import createCollapsibleEntry from '../src/CollapsibleEntry.js';
-    import createPlainEntry from '../src/PlainEntry.js';
+    import createSimpleEntry from '../src/SimpleEntry.js';
     import createSeparator from '../src/Separator.js';
     import createTableEntry from '../src/TableEntry.js';
 
@@ -93,11 +93,13 @@
     const fields = [];
     const render = () => { out.textContent = fields.map(f => '# ' + f.filename + '\n' + serialize(f.columns, f.table.getRows())).join('\n\n'); };
 
-    // a clickable PLAIN entry (Issues-style row)
-    const issues = createPlainEntry({ onClick: () => alert('clicked the plain entry (like an Issues row)') });
+    // a clickable SIMPLE entry (Issues-style row)
     const issueRow = el('div', 'issue-row');
     issueRow.innerHTML = '<span>⚠︎ Issues</span><span class="issue-count">3</span>';
-    issues.contentEl.appendChild(issueRow);
+    const issues = createSimpleEntry({
+      content: issueRow,
+      onClick: () => alert('clicked the simple entry (like an Issues row)')
+    });
 
     // the Input group: a top-level caret-right collapsible holding one caret-left file collapsible each
     const input = createCollapsibleEntry({ id: 'input', label: 'Input', open: true });

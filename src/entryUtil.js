@@ -75,6 +75,27 @@ export function labelSetter(titleEl, emptyLabel) {
   };
 }
 
+/**
+ * The content writer for entry bodies: a string becomes text, an element or array becomes children,
+ * and nothing at all does nothing (content slot stays empty).
+ *
+ * @param {HTMLElement} contentEl
+ * @return {function((string|Node|Node[]|null)): void}
+ */
+export function contentSetter(contentEl) {
+  return (value) => {
+    if (value == null || value === '') {
+      contentEl.replaceChildren();
+    } else if (typeof value === 'string') {
+      contentEl.textContent = value;
+    } else if (Array.isArray(value)) {
+      contentEl.replaceChildren(...value);
+    } else {
+      contentEl.replaceChildren(value);
+    }
+  };
+}
+
 export function makeClickable(element, onClick) {
   if (typeof onClick !== 'function') {
     return;

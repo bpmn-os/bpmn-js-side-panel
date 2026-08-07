@@ -12,11 +12,16 @@ import { el } from './entryUtil.js';
  * Live updates: keep the element you `add`ed (or fetch it with `get(key)`) and mutate it directly;
  * the list holds the same node, so the change is in place.
  *
+ * The entries a list starts with are given as `items`, each of them the key it is held under and the
+ * element it is, in the order they are to be shown; it is `add` that gives it one later. A list built in
+ * one call reads as the list it is rather than as the calls that made it.
+ *
  * @param {Object} [options]
  * @param {string} [options.id]           stamped as data-entry-id
  * @param {boolean} [options.separators=false]  draw a hairline between consecutive entries (the same
  *                                        1px grey rule as {@link createSeparator}); off by default so
  *                                        entries stack flush. Toggle later with `setSeparators`.
+ * @param {Array<{key: string, element: HTMLElement}>} [options.items]  the entries to start with
  * @return {{
  *   element: HTMLElement,
  *   add: (function(string, HTMLElement, number=): HTMLElement),
@@ -30,40 +35,40 @@ import { el } from './entryUtil.js';
  * }}
  */
 export default function createListEntry(options = {}) {
-  const { id, separators = false } = options;
+  const { id, separators = false, items } = options;
 
-  const element = el('div', 'bjs-list');
+  const element = el('div', 'bjs-entry bjs-list');
   element.classList.toggle('bjs-list-separated', separators !== false);
   if (id != null) {
     element.setAttribute('data-entry-id', id);
   }
 
-  const items = new Map();   // key -> entry element
-  const order = [];          // keys, in display order
+  const entries = new Map();   // key -> entry element
+  const order = [];            // keys, in display order
 
   const nodeAt = (index) => element.children[index] || null;
 
   /** Add (or replace) the entry for `key`; appends unless `index` is given. Returns the entry element. */
   const add = (key, entryEl, index) => {
-    if (items.has(key)) {
+    if (entries.has(key)) {
       remove(key);
     }
     const at = (index == null || index >= order.length) ? order.length : Math.max(0, index);
     order.splice(at, 0, key);
-    items.set(key, entryEl);
+    entries.set(key, entryEl);
     element.insertBefore(entryEl, nodeAt(at));
     return entryEl;
   };
 
   const remove = (key) => {
-    const entryEl = items.get(key);
+    const entryEl = entries.get(key);
     if (!entryEl) {
       return;
     }
     if (entryEl.parentNode === element) {
       element.removeChild(entryEl);
     }
-    items.delete(key);
+    entries.delete(key);
     const i = order.indexOf(key);
     if (i >= 0) {
       order.splice(i, 1);
@@ -83,14 +88,16 @@ export default function createListEntry(options = {}) {
     order.splice(from, 1);
     order.splice(to, 0, key);
     // appendChild on an existing child moves it, so appending in order reorders the whole list
-    order.forEach((k) => element.appendChild(items.get(k)));
+    order.forEach((k) => element.appendChild(entries.get(k)));
   };
 
-  const has = (key) => items.has(key);
-  const get = (key) => items.get(key);
+  const has = (key) => entries.has(key);
+  const get = (key) => entries.get(key);
   const keys = () => order.slice();
   const clear = () => order.slice().forEach(remove);
   const setSeparators = (on) => element.classList.toggle('bjs-list-separated', !!on);
+
+  [].concat(items || []).forEach((item) => item && add(item.key, item.element));
 
   return { element, add, remove, move, setSeparators, has, get, keys, clear };
 }

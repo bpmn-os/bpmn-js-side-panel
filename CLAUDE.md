@@ -33,17 +33,21 @@ CSS that isn't obvious from either alone:
   `eventBus`, `canvas`. Builds all DOM imperatively (no framework; plain `document.createElement`
   via the local `el()` helper).
 - The **entry components**, each a factory returning a handle over a plain element:
-  `SimpleEntry.js`, `CollapsibleEntry.js`, `PlainEntry.js`, `TableEntry.js`, `ListEntry.js`,
-  `OrderedListEntry.js`, `Separator.js`, over the shared `entryUtil.js`, which holds `buildEntryRow`
-  (the summary row both row-shaped entries draw), `labelSetter` and `makeClickable`.
+  `SimpleEntry.js`, `CollapsibleEntry.js`, `TableEntry.js`, `ListEntry.js`, `OrderedListEntry.js`,
+  `ControlButton.js`, `Separator.js`, over the shared `entryUtil.js`, which holds `buildEntryRow` (the
+  collapsible entry's summary row), `labelSetter`, `contentSetter` and `makeClickable`.
 
-**Three ways to be an entry, and which is which.** A **simple** entry is a row that discloses
-nothing, so its label runs the full width; it suits a list where nothing opens. A **collapsible**
-entry is that same row plus a caret and a body, and its `expandable: false` is for a row that cannot
-open but stands among rows that can, which is why such a row keeps the caret's space. A **plain**
-entry is not a row at all but a full-width box the consumer fills, for a note or a hint. The row is
-built in one place so the simple and the collapsible cannot drift, and the CSS defines its geometry
-once, `.bjs-collapsible-entry-header, .bjs-simple-entry-row`.
+**Two ways to be an entry, and which is which.** A **simple** entry is what it holds: content that is
+shown always, running over as many lines as it needs, with a slot to the right of it for the controls
+that act on it. A **collapsible** entry is a summary row — a label that is one line and truncates, its
+controls, and a caret — over a body that is shown only when it is open; its `expandable: false` is for a
+row that cannot open but stands among rows that can, which is why such a row keeps the caret's space.
+A list, an ordered list and a table are entries too, and every one of them carries `bjs-entry`, which is
+what the CSS selects on to give an entry the field of the slot it stands in.
+
+Nothing is named by an option: a list is named by nesting it in a collapsible entry, whose label is the
+name and whose body is the list. The alternative, a heading option on the list, would be a second way to
+write a label and would drift from the first.
 - `assets/side-panel.css` — layout + chrome.
 
 **An entry's shape does not depend on its state.** The insets are owned by the entry, not by the
@@ -56,6 +60,27 @@ component did before and what misaligned such a list. On a non-expandable row th
 applied by the requested side alone, not by expandability, so the reservation sits where the siblings'
 carets are. A row that discloses nothing at all in a list where nothing discloses is a **simple**
 entry instead, and reserves nothing.
+
+**Structure.** The panel is a grid of four children: `bjs-panel-divider` in the first column spanning every
+row, and `bjs-panel-header`, `bjs-panel-body` and `bjs-panel-footer` stacked in the second. The body holds
+`bjs-panel-tabs` (the `bjs-tab-selector` buttons) and one `bjs-tab` per tab, each of which holds
+`bjs-tab-header`, `bjs-tab-body`, `bjs-tab-footer` and `bjs-tab-note`. Both levels are reached the same
+way: `addTab` hands back a tab's three, `getSlots` hands back the panel's two, and a note stands in for the
+whole of a tab rather than part of it. The `header` config remains for a host with nothing to change. Every name states the level it belongs to. The grid
+exists so that the panel's own parts are siblings: an intermediate wrapper would have to be called a body,
+and that is exactly what went wrong before — `.bjs-side-panel-body` named both the panel's wrapper and a
+tab's scrolling body, so the stylesheet declared it twice and each element silently received the union of
+both rules. `.bjs-layout`, `.bjs-side-panel-parent` and `body.bjs-side-panel-resizing` name where the panel
+sits in its host and what is being done to it rather than what it is made of, and keep their names.
+
+**Resizing.** The divider sets the panel's width, and there is no floor unless a host gives `minWidth`, so
+the panel collapses to the divider and the divider is what brings it back; a double click on it collapses
+and restores. The selectors scroll horizontally rather than shrinking past reading, their scrollbar hidden
+and their ends masked so that the strip says there is more of it.
+
+**The demo** (`npm run dev`, `demo/`) is the package shown working: a modeller, the properties panel hosted
+through the `propertiesPanel` seam, and a tab whose entries each say what they are. It runs `src/` directly
+rather than a copy, so it is the thing to look at when a change is visual.
 
 **JS/CSS contract (the key thing to understand):** on `diagram.init`, `_init()` mounts into the
 configured `parent` slot and *stamps two class names* — `.bjs-layout` on the slot's parent (the
@@ -80,16 +105,17 @@ caller to render into.
 **Resize:** left-edge pointer-drag handle; dragging left widens. On pointer-up it calls
 `canvas.resized()` so diagram-js re-measures.
 
-## Design constraints (from ROADMAP.md)
+## Design constraints
 
-The overriding goal is **compatibility with `bpmn-js-properties-panel`** (UI and API), so downstream
-repos (**bpmnos-js**, **bpmn-workbench**, **bpmnos-workbench**) can adopt it. Prefer a clean
-implementation with minimal hacks; any hack needed for upstream compatibility must be rare and
-well-documented so an upstream change is unlikely to break it.
+The overriding goal is compatibility with `bpmn-js-properties-panel`, in look and in API, so that a host
+may put a properties panel in one tab and its own content in the next and read them as one panel. Prefer a
+clean implementation with minimal hacks; any hack needed for that compatibility must be rare and
+well-documented, so that an upstream change is unlikely to break it.
 
-Planned work centers on a reusable **collapsible entry** that matches `@bpmn-io/properties-panel`'s
-`bio-properties-panel-collapsible-entry` in look and API, built in plain DOM (min-dom, no preact),
-reusing the properties-panel CSS variables/classes. See ROADMAP.md for the staged task list.
+The entries are what carries it. Each matches the corresponding `@bpmn-io/properties-panel` element in
+look — the collapsible entry against `bio-properties-panel-collapsible-entry`, the table's plus and trash
+against its list controls — while using this package's own `bjs-*` classes and `--bjs-*` tokens, so there
+is no dependency on properties-panel and no class or CSS overlap with it.
 
 ## Conventions
 

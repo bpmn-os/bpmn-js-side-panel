@@ -1,4 +1,4 @@
-import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
+import { buildEntryRow, el, labelSetter, contentSetter, makeClickable } from './entryUtil.js';
 
 /**
  * Plain-DOM collapsible entry — the first entry-component of the side panel's own UI toolkit.
@@ -21,6 +21,7 @@ import { buildEntryRow, el, labelSetter, makeClickable } from './entryUtil.js';
  * @param {Object} [options]
  * @param {string} [options.id]              stamped as data-entry-id (stable identity for updates)
  * @param {string|Node} [options.label]      collapsed summary content, string or element
+ * @param {string|Node|Node[]} [options.content] content placed in the body (ignored when not expandable)
  * @param {boolean} [options.open=false]     initial open state (ignored when not expandable)
  * @param {'left'|'right'} [options.caretSide='right'] disclosure-caret placement, mirroring
  *        properties-panel: top-level groups put it on the right, nested entries on the left
@@ -48,6 +49,7 @@ export default function createCollapsibleEntry(options = {}) {
   const {
     id,
     label,
+    content,
     open = false,
     caretSide = 'right',
     toggleOn = 'header',
@@ -106,6 +108,10 @@ export default function createCollapsibleEntry(options = {}) {
   if (expandable) {
     contentEl = el('div', 'bjs-collapsible-entry-entries');
     element.appendChild(contentEl);
+    if (content != null) {
+      const setContent = contentSetter(contentEl);
+      setContent(content);
+    }
   }
 
   // open state lives as a class on the persistent root, so it survives content mutation

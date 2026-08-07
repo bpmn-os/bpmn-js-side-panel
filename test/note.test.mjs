@@ -35,7 +35,7 @@ test('a note stands in for a tab\'s content, and gives it back', () => {
   sidePanel.setNote('properties', 'Select a node.');
 
   const pane = sidePanel.getTab('properties').pane,
-        note = pane.querySelector('.bjs-side-panel-note');
+        note = pane.querySelector('.bjs-tab-note');
 
   assert.equal(note.textContent, 'Select a node.');
   assert.equal(note.style.display, '');
@@ -59,7 +59,7 @@ test('a note may be an element, and an unknown tab is an error', () => {
   element.textContent = 'nothing to show';
   sidePanel.setNote('tokens', element);
 
-  assert.equal(sidePanel.getTab('tokens').pane.querySelector('.bjs-side-panel-note em').textContent,
+  assert.equal(sidePanel.getTab('tokens').pane.querySelector('.bjs-tab-note em').textContent,
     'nothing to show');
 
   assert.throws(() => sidePanel.setNote('missing', 'x'), /tab <missing> does not exist/);

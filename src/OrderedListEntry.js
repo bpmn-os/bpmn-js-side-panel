@@ -23,12 +23,17 @@ import createListEntry from './ListEntry.js';
  * first entry is fixed therefore reorders freely beneath a heading that stays put. The lane is kept
  * empty rather than dropped, so an anchor lines up with the entries around it.
  *
+ * The entries a list starts with are given as `items`, as {@link createListEntry} takes them, each of
+ * them the key it is held under and the element it is, and an anchor saying so with `fixed`.
+ *
  * @param {Object} [options]
  * @param {string} [options.id]
  * @param {'left'|'right'} [options.side='left']   which side the strip sits (default opposite the caret)
  * @param {boolean} [options.reordering=true]      show the strip (call `setReordering` to toggle)
  * @param {boolean} [options.separators=false]     hairline between entries (see {@link createListEntry})
  * @param {Function} [options.onReorder]           called with the new key order after any reorder
+ * @param {Array<{key: string, element: HTMLElement, fixed: boolean=}>} [options.items]  the entries to
+ *                                                 start with, an anchor among them marked `fixed`
  * @return {{
  *   element: HTMLElement,
  *   add: (function(string, HTMLElement, number=, Object=): HTMLElement),
@@ -44,7 +49,7 @@ import createListEntry from './ListEntry.js';
  * }}
  */
 export default function createOrderedListEntry(options = {}) {
-  const { id, side = 'left', reordering = true, separators = false, onReorder } = options;
+  const { id, side = 'left', reordering = true, separators = false, onReorder, items } = options;
 
   const list = createListEntry({ separators });   // holds ROW wrappers (strip + item), keyed the same
   const element = list.element;
@@ -135,12 +140,12 @@ export default function createOrderedListEntry(options = {}) {
     }
   };
 
-  const add = (key, entryEl, index, options = {}) => {
+  const add = (key, entryEl, index, { fixed = false } = {}) => {
     const row = el('div', 'bjs-ordered-list-row');
 
     const strip = el('div', 'bjs-reorder-strip');
 
-    if (options.fixed) {
+    if (fixed) {
       // an anchor: the lane without the arrows, so it lines up with the entries it holds in place
       const item = el('div', 'bjs-ordered-list-item');
 
@@ -191,6 +196,8 @@ export default function createOrderedListEntry(options = {}) {
   };
 
   const setReordering = (on) => element.classList.toggle('bjs-reordering', !!on);
+
+  [].concat(items || []).forEach((item) => item && add(item.key, item.element, undefined, item));
 
   return {
     element,

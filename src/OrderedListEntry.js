@@ -215,8 +215,8 @@ export default function createOrderedListEntry(options = {}) {
   };
 }
 
-// FontAwesome Free v7 solid arrow-up / arrow-down, so the step controls share the icon language of
-// the disclosure caret (both are FontAwesome-style glyphs) rather than ad-hoc triangles.
+// Font Awesome Free's solid arrow-up and arrow-down, so the step controls share the icon language of the
+// disclosure caret rather than being ad-hoc triangles. They are CC BY 4.0 and attributed in LICENSE.
 const UP_SVG =
   '<svg width="12" height="12" viewBox="0 0 640 640" aria-hidden="true" focusable="false">' +
   '<path fill="currentColor" d="M342.6 73.4C330.1 60.9 309.8 60.9 297.3 73.4L137.3 233.4C124.8 245.9 ' +

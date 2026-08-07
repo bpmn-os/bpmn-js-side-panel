@@ -175,12 +175,16 @@
   display: none;
 }
 
+/* A selector is its name and a slot beside it, so that a host may hang a count or a mark on a tab. The
+   name gives way first: it is the badge that says there is something to attend to, so the name truncates
+   and the badge keeps its width. An empty slot takes no room, gap included. */
 .bjs-tab-selector {
   flex: 1 1 0;
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   padding: 8px 10px;
   background: none;
   border: none;
@@ -188,6 +192,23 @@
   font: inherit;
   color: var(--bjs-grey-35, hsl(225, 10%, 35%));
   cursor: pointer;
+}
+
+.bjs-tab-selector-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bjs-tab-selector-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bjs-tab-selector-badge:empty {
+  display: none;
 }
 
 .bjs-tab-selector:hover {

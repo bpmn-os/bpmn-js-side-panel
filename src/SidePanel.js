@@ -169,11 +169,18 @@ export default class SidePanel {
       throw new Error('tab <' + id + '> already exists');
     }
 
+    // The selector is its name and a slot beside it, rather than a line of text, so that a host may hang
+    // something small and live on a tab — a count of what it holds, marked in the host's own colours —
+    // without reaching into the panel for the button to hang it on.
     const button = el('button', 'bjs-tab-selector');
     button.type = 'button';
-    button.textContent = label;
     button.setAttribute('data-tab', id);
     button.addEventListener('click', () => this.activate(id));
+
+    const buttonLabel = el('span', 'bjs-tab-selector-label');
+    buttonLabel.textContent = label;
+    const buttonBadge = el('span', 'bjs-tab-selector-badge');
+    button.append(buttonLabel, buttonBadge);
 
     const pane = el('div', 'bjs-tab');
     pane.setAttribute('data-tab', id);
@@ -203,7 +210,8 @@ export default class SidePanel {
 
     const tab = {
       id, label, priority, width, open,
-      button, pane, header, body, footer, note, divider: columnDivider, name: columnName
+      button, buttonLabel, buttonBadge,
+      pane, header, body, footer, note, divider: columnDivider, name: columnName
     };
 
     this._tabs.push(tab);
@@ -352,15 +360,47 @@ export default class SidePanel {
    * @param {string} label
    */
   setTabLabel(id, label) {
+    const tab = this._requireTab(id);
+
+    tab.label = label;
+    tab.buttonLabel.textContent = label;
+    tab.name.textContent = label;
+  }
+
+  /**
+   * Hang something on a tab's selector, or take it away again with `null`.
+   *
+   * It is for what a tab holds rather than for what it is: how many issues a lint found, how many tokens
+   * are standing. The panel places it and nothing more — what it says, and what colour says it, are the
+   * host's, exactly as the controls an entry carries are, since severity and count are the host's
+   * vocabulary and not the panel's.
+   *
+   * A badge belongs to a selector, and the column view has none, so it is shown in the tabbed view alone.
+   * A count that must be seen in both belongs in the tab's name, through `setTabLabel`.
+   *
+   * @param {string} id
+   * @param {string|Node|null} badge
+   */
+  setTabBadge(id, badge) {
+    const tab = this._requireTab(id);
+
+    if (badge == null) {
+      tab.buttonBadge.replaceChildren();
+    } else if (typeof badge === 'string') {
+      tab.buttonBadge.textContent = badge;
+    } else {
+      tab.buttonBadge.replaceChildren(badge);
+    }
+  }
+
+  _requireTab(id) {
     const tab = this._tabs.find(t => t.id === id);
 
     if (!tab) {
       throw new Error('tab <' + id + '> does not exist');
     }
 
-    tab.label = label;
-    tab.button.textContent = label;
-    tab.name.textContent = label;
+    return tab;
   }
 
   getTab(id) {

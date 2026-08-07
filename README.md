@@ -72,6 +72,11 @@ panel module is registered, **do not** set its `parent` — the side panel attac
 - `setTabLabel(id, label)` — rename a tab, which names it on its selector and on its column's resizer at
   once. A name that says how much a tab holds changes while a run does, and a host that could name a tab
   only as it added one could not say so.
+- `setTabBadge(id, badge)` — hang something on a tab's selector, `badge` being a string, an element, or
+  `null` to take it away. It is for what a tab holds rather than for what it is, a count of issues or of
+  tokens among them. The panel places it and nothing more: what it says and what colour says it are the
+  host's, as the controls an entry carries are. A badge belongs to a selector, so it is shown in the tabbed
+  view alone; a count that must be seen in both views belongs in the name.
 
 The tab bar is hidden automatically when there is only one tab, and scrolls horizontally when its
 selectors crowd, its ends fading to say that there is more of it.

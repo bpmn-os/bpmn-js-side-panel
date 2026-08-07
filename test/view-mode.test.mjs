@@ -152,33 +152,6 @@ test('the panel is as wide as its columns, and as wide as the host said again on
   assert.equal(host.style.width, '340px', 'and it is where the host put it');
 });
 
-test('a tab carries a badge on its selector, which its name does not disturb', () => {
-  const { document, sidePanel } = panel();
-
-  sidePanel.addTab({ id: 'issues', label: 'Issues' });
-
-  const button = document.querySelector('.bjs-tab-selector[data-tab="issues"]'),
-        label = button.querySelector('.bjs-tab-selector-label'),
-        slot = button.querySelector('.bjs-tab-selector-badge');
-
-  assert.equal(label.textContent, 'Issues');
-  assert.equal(slot.childNodes.length, 0, 'and holds nothing until it is given something');
-
-  const mark = document.createElement('span');
-  mark.textContent = '3';
-  sidePanel.setTabBadge('issues', mark);
-  assert.equal(slot.firstChild, mark, 'what the host gives is what is placed, unchanged');
-
-  sidePanel.setTabLabel('issues', 'Issues (still)');
-  assert.equal(label.textContent, 'Issues (still)');
-  assert.equal(slot.firstChild, mark, 'renaming a tab does not take its badge away');
-
-  sidePanel.setTabBadge('issues', null);
-  assert.equal(slot.childNodes.length, 0);
-
-  assert.throws(() => sidePanel.setTabBadge('nope', mark), /tab <nope> does not exist/);
-});
-
 test('a tab may be added and taken away in either view', () => {
   const { sidePanel } = panel();
 

@@ -29,6 +29,13 @@
      control keeps its gap from the panel's edge rather than from the container's. */
   --bjs-entry-inset: 12px;
   --bjs-control-gap: 4px;
+
+  /* The width an entry keeps whatever holds it. A column narrowed below it clips its entries rather than
+     squashing them, so that narrowing a column changes how much of it is seen and not how it is written,
+     and a reader dragging a resizer sees the same rows the whole way. It is the width a column takes when
+     its tab states none, so a column at its default width is exactly wide enough for what it holds. A host
+     that knows its content is narrower says so here, on the panel or on one tab of it. */
+  --bjs-entry-min-width: 260px;
 }
 
 /* Two-pane layout. The module stamps `.bjs-layout` on the wrapper and `.bjs-side-panel-parent` on the
@@ -57,7 +64,10 @@
    both the panel's body and a tab's. */
 .bjs-panel {
   display: grid;
-  grid-template-columns: auto 1fr;
+  /* `minmax(0, 1fr)` rather than `1fr`, so that what a host puts in a slot cannot hold the column open at
+     its own minimum. The panel's width is the host's in the tabbed view and the columns' in the other; in
+     neither is it the header's. */
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
   height: 100%;
   box-sizing: border-box;
@@ -77,28 +87,48 @@
   cursor: col-resize;
   background-color: #f8f8f8;
   background-repeat: no-repeat;
-  background-position: left center;
+  background-position: center;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='30'><path d='M2 0 v30 M5 0 v30 M8 0 v30' fill='none' stroke='black'/></svg>");
+  /* A white line on the left and a grey one on the right, so the grip reads as raised against what is on
+     either side of it. The width is the grip's ten pixels plus the two rules. */
+  border-left: 1px solid #fff;
   border-right: 1px solid #aaa;
   user-select: none;
 }
 
 /* The panel's slots, above and below everything. Both are built whether or not a host fills one, so that
    a host may fill either later; an empty one takes no room and draws nothing. */
-.bjs-panel-header {
+/* The panel's slots, above and below everything. Each stands at a height of its own, so that the tabs
+   between them begin and end at one place whatever a host puts in either and however the panel is resized;
+   what does not fit is clipped, as what is too wide is. The white rule on the left continues the one on the
+   panel's divider, so the band and the grip beside it read as one edge. */
+.bjs-panel-header,
+.bjs-panel-footer {
   grid-column: 2;
-  grid-row: 1;
+  box-sizing: border-box;
+  height: var(--bjs-panel-slot-height, 40px);
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: 0 12px;
   background-color: var(--bjs-grey-97, hsl(225, 10%, 97%));
+  border-left: 1px solid #fff;
+  /* A slot is as wide and as tall as the panel says and not the other way about: what a host puts in one is
+     clipped rather than allowed to hold the panel open, since in the column view the panel's width is what
+     the columns say and a slot holding it wider would move the columns as one of them was narrowed. It is
+     clipped rather than wrapped for the same reason: a band that grew a line to fit its content would set
+     its own height, and the tabs between the bands would begin and end wherever the content decided. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.bjs-panel-header {
+  grid-row: 1;
   border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
 .bjs-panel-footer {
-  grid-column: 2;
   grid-row: 3;
-  background-color: var(--bjs-grey-97, hsl(225, 10%, 97%));
   border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
@@ -127,16 +157,18 @@
 }
 
 /* The selectors scroll rather than shrink past reading: a panel narrow enough to crowd them is ordinary,
-   and a selector squeezed to nothing says less than one scrolled out of sight. The scrollbar is hidden,
-   which is why the ends fade — a scrolling strip with no visual hint is a thing readers do not find. */
+   and a selector squeezed to nothing says less than one scrolled out of sight. The scrollbar is hidden.
+   The ends are not faded: a mask fades everything under it, the accent beneath the selected tab included,
+   so a tab against either edge of the panel would be shown as half selected. */
 .bjs-panel-tabs {
   flex: 0 0 auto;
   display: flex;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
-  mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+  /* the rule under the selectors, which is the head of the tab beneath them; the selected tab's accent is
+     drawn over it */
+  border-bottom: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
 .bjs-panel-tabs::-webkit-scrollbar {
@@ -175,12 +207,133 @@
   flex: 1 1 auto;
   min-height: 0;
   flex-direction: column;
-  border-top: 1px solid var(--bjs-grey-75, hsl(225, 10%, 75%));
 }
 
 .bjs-tab.active {
   display: flex;
 }
+
+/* Column view — the same elements, laid out side by side rather than one at a time, so that a change of
+   view builds nothing, moves nothing and throws nothing away, and a tab keeps its content and its scroll
+   position across it.
+
+   The panel is as wide as what it holds: its width is the sum of its resizers and its open columns rather
+   than a quantity of its own, which is why its own divider is not drawn here and why every drag is a
+   column's. Where the columns together want more room than the window has, the canvas gives way first and
+   what still does not fit is cut off at the right, which is the one case a reader can reach and the one
+   they undo by narrowing the rightmost column. */
+.bjs-panel.bjs-columns > .bjs-panel-body {
+  flex-direction: row;
+  overflow: hidden;
+  /* The columns stand against the panel's right edge, which is what makes everything to the right of a
+     resizer stay put whatever the reader drags. It matters whenever the panel is wider than its columns,
+     which it is whenever something else holds it open — a header or a footer of the host's with a minimum
+     width of its own. Were the columns to stand against the left edge instead, that slack would fall to
+     the right of them and narrowing a column would drag every column after it leftwards. */
+  justify-content: flex-end;
+}
+
+.bjs-panel.bjs-columns > .bjs-panel-divider {
+  display: none;
+}
+
+.bjs-panel.bjs-columns .bjs-tab {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+  overflow: hidden;   /* the panel deals the widths; a body shown in part is cut off, not reflowed */
+}
+
+/* A column closed or opened by a double click draws itself away and back rather than vanishing, and the
+   panel goes with it, being as wide as its columns. A drag is not animated: there the width is the
+   pointer's own, and a transition would leave the resizer trailing behind the hand that moves it. */
+.bjs-layout > .bjs-side-panel-parent,
+.bjs-panel.bjs-columns .bjs-tab {
+  transition: width 150ms ease;
+}
+
+body.bjs-side-panel-resizing .bjs-layout > .bjs-side-panel-parent,
+body.bjs-side-panel-resizing .bjs-panel.bjs-columns .bjs-tab {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bjs-layout > .bjs-side-panel-parent,
+  .bjs-panel.bjs-columns .bjs-tab {
+    transition: none;
+  }
+}
+
+/* A column's own resizer, standing at its left edge: dragging it sets that column's width, and a double
+   click closes the column and opens it again at the width it had. It is drawn in the column view alone,
+   having nothing to divide in the other. The first column's is the panel's left edge, and stands against
+   the diagram. A closed column is its resizer and nothing else, which is what says the column is there and
+   what brings it back. */
+.bjs-tab-divider {
+  display: none;
+}
+
+.bjs-panel.bjs-columns > .bjs-panel-body > .bjs-tab-divider {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  /* eleven pixels, the two rules included, whatever it carries: the name is set in a size that fits the
+     nine that remain, rather than the strip being widened to fit the name */
+  width: 11px;
+  cursor: col-resize;
+  background-color: #f8f8f8;
+  border-left: 1px solid #fff;
+  border-right: 1px solid #aaa;
+  user-select: none;
+}
+
+/* The grip, above the name and below it, so that a resizer is a name between two places to take hold of.
+   Each takes half of what the name leaves, so the name stands at the middle of the strip however tall the
+   panel is, and neither ever holds the strip open, both being free to shrink to nothing. */
+.bjs-panel.bjs-columns > .bjs-panel-body > .bjs-tab-divider::before,
+.bjs-panel.bjs-columns > .bjs-panel-body > .bjs-tab-divider::after {
+  content: '';
+  flex: 1 1 0;
+  min-height: 0;
+  background-repeat: no-repeat;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='30'><path d='M2 0 v30 M5 0 v30 M8 0 v30' fill='none' stroke='black'/></svg>");
+}
+
+/* Each block sits against the name rather than in the middle of the space it has, so that the two flank
+   the name and the gap between them is the name's own length whatever the panel's height. */
+.bjs-panel.bjs-columns > .bjs-panel-body > .bjs-tab-divider::before {
+  background-position: center bottom;
+}
+
+.bjs-panel.bjs-columns > .bjs-panel-body > .bjs-tab-divider::after {
+  background-position: center top;
+}
+
+/* The column's name, read upward. The space it takes is stated rather than measured from the longest name:
+   a name that says how much its tab holds changes as the run does — "Tokens (5)" one moment and
+   "Tokens (214)" the next — and a length measured from the names would move every grip in the panel each
+   time one of them changed. A name longer than the space is cut short instead, which no other name feels. */
+.bjs-tab-divider-name {
+  /* The stated length is always taken, whatever the name is: a name that took only what it needed would put
+     the grips above and below it at a different height on every resizer, and at a new height each time a
+     count in a name changed. A short name is centred in it and a long one is cut short. */
+  flex: 0 0 var(--bjs-tab-name-length, 90px);
+  height: var(--bjs-tab-name-length, 90px);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 10px;
+  line-height: 10px;
+  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
+}
+
+/* A column that does not stand open takes no width, which the panel writes; the class is what a host may
+   style it by. It keeps its place in the order and everything it holds, so opening it again gives back
+   exactly what was there. */
 
 /* A tab's header and footer mirror `bio-properties-panel-header`, so that a tab of a host's own and the
    properties panel's tab read as one panel: the same grey field, the same rule beneath it, the same text
@@ -197,7 +350,12 @@
   justify-content: center;
   font-size: 14px;
   background-color: var(--bjs-grey-95, hsl(225, 10%, 95%));
+  /* Clipped rather than wrapped, as the panel's own bands are: a band that grew a line to fit its content
+     would set its own height, and the body between the bands would begin and end wherever the content
+     decided rather than where the tab does. */
+  min-width: 0;
   overflow: hidden;
+  white-space: nowrap;
   /* the band supplies the inset, so an entry standing in it does not add a second one */
   --bjs-entry-inset: 0;
 }
@@ -254,6 +412,10 @@ body.bjs-side-panel-resizing * {
    `bio-properties-panel-group` is, so the content of a tab reads as the properties panel's does while the
    space below the last entry keeps the panel's own grey. In a header or a footer it takes that band's
    grey, so a heading is part of its band rather than a white row laid over it. */
+.bjs-entry {
+  min-width: var(--bjs-entry-min-width, 260px);
+}
+
 .bjs-tab-body > .bjs-entry {
   background-color: #fff;
 }
@@ -365,35 +527,24 @@ body.bjs-side-panel-resizing * {
   padding-left: 0;
 }
 
-/* A control button — small, circular, with icon centering and hover highlight.
-   Used in entry control slots and other contexts where a compact control is needed. */
-.bjs-control {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 11px;
-  background: none;
-  color: var(--bjs-grey-35, hsl(225, 10%, 35%));
-  cursor: pointer;
-  flex-shrink: 0;
-}
+/* A control an entry carries: a 22px circle with a grey glyph and a circular hover, which is the shape the
+   disclosure caret and the reorder arrows have, so that every control in the panel reads as one family.
+   The shape is the panel's; what a control does and when it is shown is the consumer's.
 
-.bjs-control:hover {
-  background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
-}
+   `bjs-control` is what `createControlButton` stamps and what a consumer drawing its own should use. The
+   two entry-scoped names are the same appearance under the names this package used before there was a
+   factory, and they are kept because consumers stamp them by hand; there is one definition of the
+   appearance rather than two, so they cannot drift.
 
-/* A control a row carries: the shape is the panel's, what it does and when it shows is the consumer's.
-   Visible by default, since a control a reader must act on cannot hide; add `bjs-entry-control-quiet`
-   for the properties-panel feel, where a removal appears on hover or focus. */
+   A control is visible by default, since one a reader must act on cannot hide. Adding `bjs-entry-control-
+   quiet` gives the properties-panel feel instead, where it appears as the row is hovered or focused. */
+.bjs-control,
 .bjs-collapsible-entry-control,
 .bjs-simple-entry-control {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   min-width: 22px;
   height: 22px;
   padding: 0;
@@ -402,6 +553,12 @@ body.bjs-side-panel-resizing * {
   background: none;
   color: var(--bjs-grey-35, hsl(225, 10%, 35%));
   cursor: pointer;
+}
+
+.bjs-control:hover,
+.bjs-collapsible-entry-control:hover,
+.bjs-simple-entry-control:hover {
+  background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
 .bjs-entry-control-quiet {
@@ -413,11 +570,6 @@ body.bjs-side-panel-resizing * {
 .bjs-simple-entry:hover .bjs-entry-control-quiet,
 .bjs-simple-entry:focus-within .bjs-entry-control-quiet {
   visibility: visible;
-}
-
-.bjs-collapsible-entry-control:hover,
-.bjs-simple-entry-control:hover {
-  background-color: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
 /* Expanded body: hidden until open. Its left inset matches the header's label, so what it holds stands

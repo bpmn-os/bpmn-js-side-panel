@@ -34,6 +34,38 @@ body {
   color: var(--bjs-accent);
 }
 
+/* The controls the host puts in the panel's footer: the view a panel is shown in is the host's to choose,
+   the package drawing no control for it, and a tab added while the panel is up is the host's to add. Both
+   are the demo's own appearance and neither belongs to the package. */
+.demo-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.demo-controls-name {
+  color: var(--bjs-grey-55);
+}
+
+.demo-controls button {
+  padding: 2px 8px;
+  border: 1px solid var(--bjs-grey-75);
+  border-radius: 3px;
+  background: #fff;
+  font: inherit;
+  color: var(--bjs-grey-15);
+  cursor: pointer;
+}
+
+.demo-controls button:hover {
+  background: var(--bjs-grey-95);
+}
+
+.demo-controls button[aria-pressed="true"] {
+  border-color: var(--bjs-accent);
+  color: var(--bjs-accent);
+}
+
 /* the demo's own content, not the package's: a property on one line */
 .demo-property {
   display: flex;

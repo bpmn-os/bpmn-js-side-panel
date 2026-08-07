@@ -53,9 +53,10 @@ panel module is registered, **do not** set its `parent` — the side panel attac
 
 ## API (`modeler.get('sidePanel')`)
 
-- `addTab({ id, label, priority = 0 }) -> { header, body, footer }` — add a tab; higher priority is
-  placed first. The three elements are the tab's own: a header and a footer that stay put, and a body
-  that scrolls between them.
+- `addTab({ id, label, priority = 0, width, open = true }) -> { header, body, footer }` — add a tab;
+  higher priority is placed first. The three elements are the tab's own: a header and a footer that stay
+  put, and a body that scrolls between them. `width` and `open` say what the tab is as a column, and are
+  ignored by the tabbed view.
 - `getSlots() -> { header, footer }` — the panel's own slots, which span it whichever tab is shown.
   They are elements a host fills rather than content given at construction, so what governs the whole
   panel, and changes while it does, can live there.
@@ -66,9 +67,56 @@ panel module is registered, **do not** set its `parent` — the side panel attac
   element, or `null` to restore the content. The tab keeps its title and its place; what it holds is
   hidden while the note stands there. It is for a tab whose content does not apply for the moment and
   whose absence would otherwise be unexplained, a properties panel during a simulation among them.
+- `setViewMode('tabbed' | 'columns')` and `getViewMode()` — show the tabs one at a time, or all of them
+  side by side as columns. It may also be stated at construction with `viewMode`.
+- `setTabLabel(id, label)` — rename a tab, which names it on its selector and on its column's resizer at
+  once. A name that says how much a tab holds changes while a run does, and a host that could name a tab
+  only as it added one could not say so.
 
 The tab bar is hidden automatically when there is only one tab, and scrolls horizontally when its
 selectors crowd, its ends fading to say that there is more of it.
+
+## The two views
+
+A panel shows its tabs one at a time, which is the default, or all of them at once as columns. The two are
+one set of elements: a change of view builds nothing, moves nothing and throws nothing away, so a tab keeps
+its content, its scroll position and whatever a host is holding of it, and a tab may be added or taken away
+in either view. A tab says what it is as a column when it is added, through `width` and `open`; a tab that
+says neither takes a default width and stands open, and what it says survives a switch to the tabbed view
+and back, so a reader who arranged the columns finds the arrangement again.
+
+In the column view every column carries a resizer at its left edge and the panel carries none, being as
+wide as the sum of its resizers and its open columns rather than having a width of its own. Dragging a
+resizer sets that column's width: everything to its right is anchored and never moves, so the resizer goes
+exactly where the pointer takes it, and everything to its left keeps its width and translates, which is to
+say the panel's left edge moves and the diagram gives up that room or takes it back. There is nothing to
+divide up and therefore no minimum widths, no distribution and no clipping; where the columns together want
+more room than the window has, the canvas gives way first and what still does not fit is cut off at the
+right, which a reader undoes by narrowing the rightmost column. No drag can put a resizer out of reach,
+since a resizer follows the pointer and the pointer cannot leave the window.
+
+A double click on a resizer closes its column and opens it again at the width it had, growing and shrinking
+into place rather than jumping, and `prefers-reduced-motion` is honoured. Dragging a column to nothing
+closes it in the same way and remembers the width it had when the drag began, so the two gestures leave the
+same state; dragging the resizer of a closed column pulls it open again. Closing every column leaves the
+panel as its resizers and nothing else, which is how a reader puts the whole panel away.
+
+A resizer carries its column's name, read upward between the two halves of its grip. The name takes a
+stated length, `--bjs-tab-name-length`, rather than one measured from the longest name, so that a name
+saying how much its tab holds — `Tokens (5)` one moment and `Tokens (214)` the next — moves no grip when it
+changes; a longer name is cut short. `setTabLabel(id, label)` renames a tab in both views at once.
+
+The panel's own header and footer stand at `--bjs-panel-slot-height`, 40px by default, and a tab's stand at
+64px. All four clip what a host puts in them rather than wrapping it, in width and in height alike: a band
+that grew to fit its content would set the panel's width in the column view, where the width is what the
+columns say, and would move where the tabs begin and end. An entry likewise keeps `--bjs-entry-min-width`,
+260px by default and the same measure a column takes when its tab states none, so narrowing a column
+changes how much of it is seen rather than how it is written.
+
+Which view is shown is the host's business and the panel draws no control for it. A host that offers the
+reader a choice draws that control where its own furniture goes, as the demo does with an entry in the
+panel's footer. Nothing is announced when the view changes, since a view that changes while a reader
+watches is a demonstration rather than a use.
 
 The panel is resized by dragging its divider, and collapses to it: there is no minimum unless a host asks
 for one with `minWidth`, so the panel can be put away entirely and its divider is what remains to bring it
@@ -129,7 +177,11 @@ Import `bpmn-js-side-panel/assets/side-panel.css`. The active-tab accent can be 
 :root { --bjs-side-panel-accent: #52b415; }
 ```
 
-Two tokens govern where the content of an entry sits, and a host retunes either without disturbing the
+The measures the panel keeps are tokens, and a host retunes any of them: `--bjs-panel-slot-height` is the
+height of the panel's own header and footer, `--bjs-tab-name-length` the space a column's name takes on its
+resizer, and `--bjs-entry-min-width` the width an entry keeps whatever holds it.
+
+Two more govern where the content of an entry sits, and a host retunes either without disturbing the
 other. `--bjs-entry-inset` is the reading inset, where a line of text starts and stops, and is 12px.
 `--bjs-control-gap` is the gap a circular control keeps from the edge of what holds it — a disclosure
 caret, a control a row carries, a reorder arrow — and is 4px, smaller than the reading inset because a

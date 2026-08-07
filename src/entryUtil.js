@@ -17,10 +17,11 @@ export function el(tag, className) {
  * No-op when onClick is not a function, so entries are inert by default.
  */
 /**
- * The summary row an entry kind is built on: a title slot that takes the width and a controls slot
- * held to its right, holding whatever controls the row carries. A simple entry is this row and nothing
- * else; a collapsible entry is this row, a caret and a body. Both draw it from here, so the row cannot
- * drift between them, and the class names are the caller's so each kind keeps its own namespace.
+ * The summary row a collapsible entry is built on: a title slot that takes the width and a controls slot
+ * held to its right, holding whatever controls the row carries. The entry is this row, a caret and a body.
+ * It is built here rather than inline so that an entry kind added later draws the same row, and the class
+ * names are the caller's so each kind keeps its own namespace. A simple entry is not built from it: it has
+ * no title, being its content, so it has no summary to draw.
  *
  * The controls belong to the row: what it can be asked to do — remove it, deliver a message to the token
  * it shows, move it up or down an order. They are the consumer's own elements, so a consumer decides what

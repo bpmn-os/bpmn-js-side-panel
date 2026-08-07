@@ -71,10 +71,11 @@ modeler.get('canvas').zoom('fit-viewport');
 const sidePanel = modeler.get('sidePanel');
 
 // The panel's own footer, spanning it below everything and standing whichever tab is shown. It is where
-// what governs the whole panel belongs, since a tab is shown one at a time and this is not.
-sidePanel.getSlots().footer.appendChild(
-  createSimpleEntry({ content: 'This footer is visible in every tab.' }).element
-);
+// what governs the whole panel belongs, since a tab is shown one at a time and this is not. Both of the
+// controls here are the host's own: the panel offers neither, the view being the host's to choose and a
+// tab being the host's to add.
+sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: viewControls() }).element);
+sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: tabControls() }).element);
 
 const custom = sidePanel.addTab({ id: 'custom', label: 'Custom' });
 
@@ -98,8 +99,7 @@ custom.body.appendChild(createCollapsibleEntry({
   id: 'demo-collapsible',
   label: 'A collapsible entry',
   open: true, // default: false
-  content: 'Its content is disclosed by the caret. An entry is the full width of the panel and the inset lives '
-    + 'inside it, so a rule or a background reaches the edges.'
+  content: 'Its content is disclosed by the caret. An entry is the full width of the panel.'
 }).element);
 
 custom.body.appendChild(createSeparator());
@@ -160,6 +160,84 @@ custom.body.appendChild(createTableEntry({
 // The tab's footer, which stays at the foot of this tab whatever the body does.
 
 custom.footer.appendChild(createSimpleEntry({ content: 'Custom footer.' }).element);
+
+/**
+ * The view a panel is shown in: one tab at a time, or every tab a column. The panel draws no control for
+ * it, so this is the demo's, and it is put in the panel's footer because it governs the whole panel rather
+ * than any one tab.
+ */
+function viewControls() {
+  const row = domify('div', 'demo-controls'),
+        name = domify('span', 'demo-controls-name');
+
+  name.textContent = 'View';
+  row.appendChild(name);
+
+  const buttons = [ 'tabbed', 'columns' ].map((mode) => {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.textContent = mode;
+    button.addEventListener('click', () => {
+      sidePanel.setViewMode(mode);
+      sync();
+    });
+    row.appendChild(button);
+
+    return { mode, button };
+  });
+
+  const sync = () => buttons.forEach(({ mode, button }) => {
+    button.setAttribute('aria-pressed', String(sidePanel.getViewMode() === mode));
+  });
+
+  sync();
+
+  return row;
+}
+
+/**
+ * A tab added and taken away while the panel is up, which works the same in either view: `addTab` hands
+ * back the three slots to fill, `removeTab` takes the tab away and moves the reader to the first that
+ * remains. As a column the tab states the width it takes, which the tabbed view ignores.
+ */
+function tabControls() {
+  const row = domify('div', 'demo-controls'),
+        name = domify('span', 'demo-controls-name'),
+        button = document.createElement('button');
+
+  name.textContent = 'Extra tab';
+  button.type = 'button';
+
+  const sync = () => { button.textContent = sidePanel.getTab('extra') ? 'remove' : 'add'; };
+
+  button.addEventListener('click', () => {
+    if (sidePanel.getTab('extra')) {
+      sidePanel.removeTab('extra');
+    } else {
+      const extra = sidePanel.addTab({ id: 'extra', label: 'Extra', width: 200 });
+
+      extra.header.appendChild(createSimpleEntry({ content: 'Extra header' }).element);
+      extra.body.appendChild(createSimpleEntry({
+        content: 'A tab added while the panel was up, and taken away again by the same control.'
+      }).element);
+    }
+    sync();
+  });
+
+  row.append(name, button);
+  sync();
+
+  return row;
+}
+
+function domify(tag, className) {
+  const node = document.createElement(tag);
+
+  node.className = className;
+
+  return node;
+}
 
 
 

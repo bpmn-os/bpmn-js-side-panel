@@ -73,10 +73,38 @@ tab's scrolling body, so the stylesheet declared it twice and each element silen
 both rules. `.bjs-layout`, `.bjs-side-panel-parent` and `body.bjs-side-panel-resizing` name where the panel
 sits in its host and what is being done to it rather than what it is made of, and keep their names.
 
-**Resizing.** The divider sets the panel's width, and there is no floor unless a host gives `minWidth`, so
-the panel collapses to the divider and the divider is what brings it back; a double click on it collapses
-and restores. The selectors scroll horizontally rather than shrinking past reading, their scrollbar hidden
-and their ends masked so that the strip says there is more of it.
+**Resizing, in the tabbed view.** The divider sets the panel's width, and there is no floor unless a host
+gives `minWidth`, so the panel collapses to the divider and the divider is what brings it back; a double
+click on it collapses and restores. The selectors scroll horizontally rather than shrinking past reading,
+with the scrollbar hidden. Their ends are not masked: a mask fades the accent under the selected tab with
+everything else, so a tab against either edge would be shown as half selected.
+
+**The column view is the same elements under one class.** `setViewMode` toggles `bjs-columns` on the panel
+and nothing is built, moved or thrown away, which is what the tests assert by holding the pane nodes across
+a change. Every tab states what it is as a column when it is added, through `width` and `open`, and keeps
+it across a change of view.
+
+There is one rule and one kind of grip. Each column has a resizer at its left edge, `bjs-tab-divider`;
+dragging it sets that column's width, and the panel's left edge moves by the same amount, since the panel's
+width in this view is written from the columns rather than being a quantity of its own. Everything to the
+right of a resizer is therefore anchored and never moves, which is why the columns stand against the
+panel's right edge — were they left-aligned, a host's header holding the panel open wider than its columns
+would put the slack to the right of them and narrowing one would drag the rest. The panel's own divider is
+not drawn here at all: the first column's resizer is the panel's left edge. A double click closes a column
+and opens it at the width it had, and a drag to nothing does the same thing, taking back the width the drag
+began with, so both gestures leave one state. Nothing is measured and nothing is distributed: no floor, no
+allocation, no minimum column width, and no clipping except by the window itself.
+
+Two things follow that a reader would otherwise ask for separately. A panel is put away by closing every
+column, so it needs no collapse of its own. And a reader can always undo an arrangement, since a resizer
+follows the pointer and the pointer cannot leave the window, so no drag can put one out of reach.
+
+**Slots clip; the columns decide the width.** `_layoutColumns` writes the panel's width as the sum of its
+resizers and open columns, the grid's second track is `minmax(0, 1fr)`, and both panel slots carry
+`min-width: 0; overflow: hidden; white-space: nowrap` with a stated height. All three are needed: without
+them a host's header holds the panel open at its own minimum, and then a column narrowed moves the columns
+after it. The same reasoning gives an entry `--bjs-entry-min-width`, so a column narrower than an entry
+clips it rather than reflowing it.
 
 **The demo** (`npm run dev`, `demo/`) is the package shown working: a modeller, the properties panel hosted
 through the `propertiesPanel` seam, and a tab whose entries each say what they are. It runs `src/` directly
@@ -103,7 +131,8 @@ itself when only one tab exists (`_renderTabs`). `addTab` returns the content `p
 caller to render into.
 
 **Resize:** left-edge pointer-drag handle; dragging left widens. On pointer-up it calls
-`canvas.resized()` so diagram-js re-measures.
+`canvas.resized()` so diagram-js re-measures, and again on `transitionend` for a width that was animated
+rather than dragged, since an animated width arrives after the diagram has been told.
 
 ## Design constraints
 

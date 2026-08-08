@@ -88,7 +88,7 @@ test('a tab lives in the panel body, beside the selectors', () => {
   assert.equal(body.querySelector('.bjs-tab-selector').textContent, 'First');
 });
 
-test('a note stands in for the whole of a tab, its header included', () => {
+test('a note stands in for what a tab holds, and the band stays', () => {
   const { sidePanel } = panel();
 
   const tab = sidePanel.addTab({ id: 'first', label: 'First' });
@@ -97,7 +97,9 @@ test('a note stands in for the whole of a tab, its header included', () => {
 
   sidePanel.setNote('first', 'nothing to show here for the moment');
 
-  assert.equal(tab.header.style.display, 'none');
+  // The band names the tab and carries what governs its list, so it is not what the note stands in for: a
+  // reader finds the tab where it was and sees what it is even while it has nothing to show.
+  assert.equal(tab.header.style.display, '');
   assert.equal(tab.body.style.display, 'none');
   assert.equal(tab.footer.style.display, 'none');
 

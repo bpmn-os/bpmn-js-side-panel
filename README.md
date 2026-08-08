@@ -66,8 +66,9 @@ panel module is registered, **do not** set its `parent` — the side panel attac
 - `getTab(id) -> { id, label, pane, width, open, visible } | undefined` — what the panel holds of a tab.
   The three states a host may set are the three it may read.
 - `setNote(id, note)` — show a note in place of a tab's content, `note` being an HTML string or an
-  element, or `null` to restore the content. The tab keeps its title and its place; what it holds is
-  hidden while the note stands there. It is for a tab whose content does not apply for the moment and
+  element, or `null` to restore the content. The tab keeps its title, its place and its band; what it
+  holds is hidden while the note stands there. The band is not content: it names the tab and carries what
+  governs its list, so a tab with nothing to show still says what it is. It is for a tab whose content does not apply for the moment and
   whose absence would otherwise be unexplained, a properties panel during a simulation among them.
 - `setViewMode('tabbed' | 'columns')` and `getViewMode()` — show the tabs one at a time, or all of them
   side by side as columns. It may also be stated at construction with `viewMode`.
@@ -125,6 +126,11 @@ A resizer carries its column's name, read upward between the two halves of its g
 stated length, `--bjs-tab-name-length`, rather than one measured from the longest name, so that a name
 saying how much its tab holds — `Tokens (5)` one moment and `Tokens (214)` the next — moves no grip when it
 changes; a longer name is cut short. `setTabLabel(id, label)` renames a tab in both views at once.
+
+A tab's band names the tab, in a heading carrying `bjs-tab-name`, above whatever governs what the tab
+lists, so that the head of a tab reads as a header rather than as a strip of controls. A tab fed from a file
+names that file under its own name, in an element carrying `bjs-tab-source`. Both are the host's to put
+there; the panel styles them and takes off the margin a browser gives a heading.
 
 The panel's own header and footer stand at `--bjs-panel-slot-height`, 40px by default, and a tab's stand at
 64px. All four clip what a host puts in them rather than wrapping it, in width and in height alike: a band

@@ -255,6 +255,7 @@ A grid of editable text cells with add and delete controls. Rows are always arra
 | `filename` | `string` | `'table.csv'` | what a save writes to, and what both controls name |
 | `separator` | `string` | `';'` | what divides one cell from the next in that CSV |
 | `onError` | `function` | undefined | called with a message when a loaded file names other columns |
+| `onLoad` | `function` | undefined | called with the file name when a file has been read into the table |
 
 ### Return value
 

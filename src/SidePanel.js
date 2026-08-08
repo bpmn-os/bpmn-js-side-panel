@@ -267,8 +267,9 @@ export default class SidePanel {
   /**
    * Show a note in place of a tab's content, or take it away again with `null`.
    *
-   * The tab keeps its title and stays where it is; what it holds is hidden and the note stands in its
-   * place. It is for a tab whose content does not apply for the moment and whose absence would otherwise be
+   * The tab keeps its name and its band and stays where it is; what it holds is hidden and the note stands
+   * in its place. The band is not content: it names the tab and carries what governs the list, so a reader
+   * finds the tab where it was and sees what it is even while it has nothing to show. It is for a tab whose content does not apply for the moment and whose absence would otherwise be
    * unexplained — a properties panel while a simulation runs, where editing is off, saying what the reader
    * may do instead.
    *
@@ -285,7 +286,6 @@ export default class SidePanel {
     if (note == null) {
       tab.note.replaceChildren();
       tab.note.style.display = 'none';
-      tab.header.style.display = '';
       tab.body.style.display = '';
       tab.footer.style.display = '';
 
@@ -299,7 +299,6 @@ export default class SidePanel {
     }
 
     tab.note.style.display = '';
-    tab.header.style.display = 'none';
     tab.body.style.display = 'none';
     tab.footer.style.display = 'none';
   }

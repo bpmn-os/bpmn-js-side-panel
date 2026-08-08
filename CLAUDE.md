@@ -73,6 +73,11 @@ tab's scrolling body, so the stylesheet declared it twice and each element silen
 both rules. `.bjs-layout`, `.bjs-side-panel-parent` and `body.bjs-side-panel-resizing` name where the panel
 sits in its host and what is being done to it rather than what it is made of, and keep their names.
 
+**A tab's band names the tab.** `bjs-tab-name` is the class a host puts on the heading it draws there, above
+whatever governs what the tab lists; the panel styles it and takes off the browser's heading margin. The band
+stands at 64px with its content centred, and pays 10px above and below rather than 16, since two lines want
+about 38 of the 64 and 16 leaves 32.
+
 **Resizing, in the tabbed view.** The divider sets the panel's width, and there is no floor unless a host
 gives `minWidth`, so the panel collapses to the divider and the divider is what brings it back; a double
 click on it collapses and restores. The selectors scroll horizontally rather than shrinking past reading,

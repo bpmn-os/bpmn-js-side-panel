@@ -37,13 +37,16 @@
  * @param {number} [options.minRows=0]  never delete below this many rows
  * @param {number|string} [options.maxHeight]  cap the grid height and scroll rows under the fixed header
  *        (a number is treated as px; a string is used verbatim, e.g. '240px', '50vh'). Consumers can also
- *        set the `--bjs-table-max-height` custom property instead.
+ *        set the `--bjs-table-max-height` custom property instead. Without it the grid is as tall as its
+ *        rows and whatever holds the entry does the scrolling, which is what a table alone in a tab wants:
+ *        the tab scrolls, and the table is simply the tab's content.
  * @param {boolean} [options.addable=true]  render the add-row button + allow Enter-append
  * @param {boolean} [options.deletable=true]  render the beside-table delete column
  * @param {boolean} [options.savable=true]  render the save control, writing the rows as a CSV
  * @param {boolean} [options.loadable=true]  render the load control, replacing the rows from a CSV
  * @param {string} [options.filename='table.csv']  what a save writes to, and what both controls name
  * @param {string} [options.separator=';']  what divides one cell from the next in that CSV
+ * @param {Function} [options.onLoad]  (filename) => void — a file read into the table, named
  * @param {Function} [options.onError]  (message) => void — a file refused for naming other columns
  *
  * @return {{
@@ -70,6 +73,7 @@ export default function createTableEntry(options = {}) {
     savable = true,
     loadable = true,
     filename = 'table.csv',
+    onLoad,
     separator = ';',
     onError
   } = options;
@@ -351,8 +355,18 @@ export default function createTableEntry(options = {}) {
 
       if (chosen) {
         chosen.text().then((text) => {
-          if (!setCsv(text) && typeof onError === 'function') {
-            onError('Unexpected header in ' + chosen.name);
+          if (!setCsv(text)) {
+            if (typeof onError === 'function') {
+              onError('Unexpected header in ' + chosen.name);
+            }
+
+            return;
+          }
+
+          // The entry owns the file, so it is the only one that knows which was read; a host naming the
+          // table somewhere of its own hears it here.
+          if (typeof onLoad === 'function') {
+            onLoad(chosen.name);
           }
         });
       }

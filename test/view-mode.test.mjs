@@ -152,6 +152,106 @@ test('the panel is as wide as its columns, and as wide as the host said again on
   assert.equal(host.style.width, '340px', 'and it is where the host put it');
 });
 
+test('a hidden tab is in neither view, and in nothing the panel measures', () => {
+  const { document, sidePanel } = panel({ viewMode: 'columns' });
+
+  sidePanel.addTab({ id: 'a', label: 'A' });
+  sidePanel.addTab({ id: 'gone', label: 'Gone', visible: false });
+
+  const part = (selector) => document.querySelector(selector + '[data-tab="gone"]');
+
+  assert.equal(part('.bjs-tab-selector').style.display, 'none', 'no selector in the tabbed view');
+  assert.equal(part('.bjs-tab').style.display, 'none', 'no column in the other');
+  assert.equal(part('.bjs-tab-divider').style.display, 'none', 'and no resizer either');
+
+  assert.equal(sidePanel.getTab('gone').visible, false);
+
+  // the panel is its resizers and its open columns, and a hidden tab is neither: with the one tab that is
+  // left hidden as well, there is nothing to be as wide as
+  sidePanel.setTabVisible('a', false);
+  assert.equal(document.querySelector('#host').style.width, '0px');
+
+  sidePanel.setTabVisible('gone', true);
+  assert.equal(part('.bjs-tab-divider').style.display, '', 'a tab shown again is drawn by the rules');
+});
+
+test('the selectors select nothing while one tab is shown, whatever is hidden', () => {
+  const { document, sidePanel } = panel();
+
+  sidePanel.addTab({ id: 'a', label: 'A' });
+  sidePanel.addTab({ id: 'b', label: 'B' });
+
+  const bar = document.querySelector('.bjs-panel-tabs');
+
+  assert.equal(bar.style.display, '');
+
+  sidePanel.setTabVisible('b', false);
+  assert.equal(bar.style.display, 'none', 'there is nothing to switch between');
+
+  sidePanel.setTabVisible('b', true);
+  assert.equal(bar.style.display, '');
+});
+
+test('hiding the tab that is shown passes the selection to the first still shown', () => {
+  const { sidePanel } = panel();
+
+  sidePanel.addTab({ id: 'a', label: 'A', priority: 10 });
+  sidePanel.addTab({ id: 'b', label: 'B' });
+
+  const active = (id) => sidePanel.getTab(id).pane.classList.contains('active');
+
+  assert.ok(active('a'), 'the first tab added is the one shown');
+
+  sidePanel.setTabVisible('a', false);
+  assert.ok(active('b'), 'and the selection passes on');
+  assert.ok(!active('a'));
+
+  sidePanel.setTabVisible('a', true);
+  assert.ok(active('b'), 'a tab shown again takes the selection from nobody');
+
+  sidePanel.setTabVisible('b', false);
+  sidePanel.setTabVisible('a', false);
+  assert.ok(!active('a'), 'and with nothing shown there is nothing selected');
+  assert.ok(!active('b'));
+
+  sidePanel.setTabVisible('b', true);
+  assert.ok(active('b'), 'the first tab shown again is shown');
+});
+
+test('a tab hidden keeps the width it takes and whether it stands open', () => {
+  const { sidePanel } = panel({ viewMode: 'columns' });
+
+  sidePanel.addTab({ id: 'a', label: 'A', width: 320 });
+  sidePanel.setTabOpen('a', false);
+  sidePanel.setTabVisible('a', false);
+  sidePanel.setTabVisible('a', true);
+
+  const tab = sidePanel.getTab('a');
+
+  assert.equal(tab.width, 320);
+  assert.equal(tab.open, false, 'a tab shown again is the column it was');
+  assert.ok(tab.pane.classList.contains('bjs-closed'));
+});
+
+test('a column is opened and closed as a double click on its resizer does it', () => {
+  const { sidePanel } = panel({ viewMode: 'columns' });
+
+  sidePanel.addTab({ id: 'a', label: 'A', width: 320 });
+
+  const pane = sidePanel.getTab('a').pane;
+
+  assert.equal(pane.style.width, '320px');
+
+  sidePanel.setTabOpen('a', false);
+  assert.equal(pane.style.width, '0px', 'a closed column takes nothing');
+  assert.ok(pane.classList.contains('bjs-closed'));
+  assert.equal(sidePanel.getTab('a').width, 320, 'and keeps the width it had');
+
+  sidePanel.setTabOpen('a', true);
+  assert.equal(pane.style.width, '320px', 'which it is given back');
+  assert.ok(!pane.classList.contains('bjs-closed'));
+});
+
 test('a tab may be added and taken away in either view', () => {
   const { sidePanel } = panel();
 

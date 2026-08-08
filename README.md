@@ -53,16 +53,18 @@ panel module is registered, **do not** set its `parent` — the side panel attac
 
 ## API (`modeler.get('sidePanel')`)
 
-- `addTab({ id, label, priority = 0, width, open = true }) -> { header, body, footer }` — add a tab;
-  higher priority is placed first. The three elements are the tab's own: a header and a footer that stay
-  put, and a body that scrolls between them. `width` and `open` say what the tab is as a column, and are
-  ignored by the tabbed view.
+- `addTab({ id, label, priority = 0, width, open = true, visible = true }) -> { header, body, footer }` —
+  add a tab; higher priority is placed first. The three elements are the tab's own: a header and a footer
+  that stay put, and a body that scrolls between them. `width` and `open` say what the tab is as a column,
+  and are ignored by the tabbed view; `visible` says whether the tab is in the panel at all, which both
+  views obey.
 - `getSlots() -> { header, footer }` — the panel's own slots, which span it whichever tab is shown.
   They are elements a host fills rather than content given at construction, so what governs the whole
   panel, and changes while it does, can live there.
 - `removeTab(id)`
 - `activate(id)`
-- `getTab(id) -> { id, label, pane } | undefined`
+- `getTab(id) -> { id, label, pane, width, open, visible } | undefined` — what the panel holds of a tab.
+  The three states a host may set are the three it may read.
 - `setNote(id, note)` — show a note in place of a tab's content, `note` being an HTML string or an
   element, or `null` to restore the content. The tab keeps its title and its place; what it holds is
   hidden while the note stands there. It is for a tab whose content does not apply for the moment and
@@ -72,6 +74,15 @@ panel module is registered, **do not** set its `parent` — the side panel attac
 - `setTabLabel(id, label)` — rename a tab, which names it on its selector and on its column's resizer at
   once. A name that says how much a tab holds changes while a run does, and a host that could name a tab
   only as it added one could not say so.
+- `setTabVisible(id, visible)` — put a tab in the panel, or take it out of it altogether. A hidden tab has
+  no selector in the tabbed view and neither a column nor a resizer in the column view, and the panel's
+  width counts neither while it is away. It keeps what it holds, the width it takes and whether it stands
+  open, so showing it again gives back the arrangement rather than a default one. Hiding the tab the
+  tabbed view shows passes the selection to the first tab still shown. This is for a tab that has no
+  business being offered; a tab that is merely empty for the moment keeps its place and is given a note.
+- `setTabOpen(id, open)` — open a tab's column, or close it to its resizer, as a double click on that
+  resizer does. The panel widens and narrows by exactly that column, and a column closed keeps the width
+  it had.
 
 The tab bar is hidden automatically when there is only one tab, and scrolls horizontally when its
 selectors crowd, its ends fading to say that there is more of it.
@@ -84,6 +95,14 @@ its content, its scroll position and whatever a host is holding of it, and a tab
 in either view. A tab says what it is as a column when it is added, through `width` and `open`; a tab that
 says neither takes a default width and stands open, and what it says survives a switch to the tabbed view
 and back, so a reader who arranged the columns finds the arrangement again.
+
+Whoever registers a tab says what that tab wants, and the host, which is the only party that knows the whole
+arrangement, says what it gets: `setTabOpen` opens and closes a column and `setTabVisible` puts a tab in the
+panel and takes it out again, at any time and in either view. The two are independent. Whether a tab is in
+the panel is a question both views answer, a hidden tab having no selector in the one and neither a column
+nor a resizer in the other; whether its column stands open is the column view's alone. A tab hidden keeps
+what it holds, the width it takes and whether it stands open, so showing it again gives back the arrangement
+rather than a default one.
 
 In the column view every column carries a resizer at its left edge and the panel carries none, being as
 wide as the sum of its resizers and its open columns rather than having a width of its own. Dragging a
@@ -99,7 +118,8 @@ A double click on a resizer closes its column and opens it again at the width it
 into place rather than jumping, and `prefers-reduced-motion` is honoured. Dragging a column to nothing
 closes it in the same way and remembers the width it had when the drag began, so the two gestures leave the
 same state; dragging the resizer of a closed column pulls it open again. Closing every column leaves the
-panel as its resizers and nothing else, which is how a reader puts the whole panel away.
+panel as its resizers and nothing else, which is how a reader puts the whole panel away; hiding every tab
+leaves no panel at all, which is the host's to do and not the reader's.
 
 A resizer carries its column's name, read upward between the two halves of its grip. The name takes a
 stated length, `--bjs-tab-name-length`, rather than one measured from the longest name, so that a name
@@ -111,7 +131,9 @@ The panel's own header and footer stand at `--bjs-panel-slot-height`, 40px by de
 that grew to fit its content would set the panel's width in the column view, where the width is what the
 columns say, and would move where the tabs begin and end. An entry likewise keeps `--bjs-entry-min-width`,
 260px by default and the same measure a column takes when its tab states none, so narrowing a column
-changes how much of it is seen rather than how it is written.
+changes how much of it is seen rather than how it is written. An entry in the panel's own header or footer
+takes no such measure, those slots being no columns: they span the panel on one line and hold several things
+at once, and an entry as wide as a column would put the rest of that column between two of them.
 
 Which view is shown is the host's business and the panel draws no control for it. A host that offers the
 reader a choice draws that control where its own furniture goes, as the demo does with an entry in the

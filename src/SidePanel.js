@@ -155,16 +155,21 @@ export default class SidePanel {
    * width and standing open, and both survive a switch to the tabbed view and back, so that a reader who
    * arranged the columns finds the arrangement again.
    *
+   * Whether the tab is in the panel at all is `visible`, which both views obey and which a host changes
+   * later through `setTabVisible`. A module that registers a tab states what that tab wants; the
+   * application, which is the only party that knows the whole arrangement, says what it gets.
+   *
    * @param {Object} options
    * @param {string} options.id
    * @param {string} options.label
    * @param {number} [options.priority=0]  higher priority tabs are placed first
    * @param {number} [options.width=260]  the width in px it takes as a column
    * @param {boolean} [options.open=true]  whether it stands open as a column
+   * @param {boolean} [options.visible=true]  whether it is in the panel
    * @return {{ header: HTMLElement, body: HTMLElement, footer: HTMLElement }} the tab's three slots: a
    *         heading and a footer that stay put, and a body that scrolls between them
    */
-  addTab({ id, label, priority = 0, width = DEFAULT_COLUMN_WIDTH, open = true }) {
+  addTab({ id, label, priority = 0, width = DEFAULT_COLUMN_WIDTH, open = true, visible = true }) {
     if (this.getTab(id)) {
       throw new Error('tab <' + id + '> already exists');
     }
@@ -202,17 +207,18 @@ export default class SidePanel {
     pane.appendChild(note);
 
     const tab = {
-      id, label, priority, width, open,
+      id, label, priority, width, open, visible,
       button, pane, header, body, footer, note, divider: columnDivider, name: columnName
     };
 
     this._tabs.push(tab);
     this._tabs.sort((a, b) => b.priority - a.priority);
 
+    this._applyVisibility(tab);
     this._setupColumnResize(tab);
     this._renderTabs();
 
-    if (this._activeId === null) {
+    if (this._activeId === null && visible) {
       this.activate(id);
     }
 
@@ -232,16 +238,24 @@ export default class SidePanel {
     remove(tab.divider);
 
     if (this._activeId === id) {
-      this._activeId = null;
-      if (this._tabs.length) {
-        this.activate(this._tabs[0].id);
-      }
+      const shown = this._tabs.find(t => t.visible);
+      this.activate(shown ? shown.id : null);
     }
 
     this._renderTabs();
   }
 
+  /**
+   * Show a tab, which in the tabbed view is the whole of what a selector does. A hidden tab is not in the
+   * panel, so it cannot be the one shown, and a host that wants it shown makes it visible first.
+   */
   activate(id) {
+    const hidden = this._tabs.find(t => t.id === id && !t.visible);
+
+    if (hidden) {
+      return;
+    }
+
     this._activeId = id;
     this._tabs.forEach(tab => {
       const active = tab.id === id;
@@ -363,9 +377,84 @@ export default class SidePanel {
     tab.name.textContent = label;
   }
 
+  /**
+   * Put a tab in the panel, or take it out of the panel altogether.
+   *
+   * A hidden tab has no selector in the tabbed view, and in the column view neither a column nor a resizer,
+   * so nothing of it is left to be found; the panel's width counts neither while it is away, and a panel with
+   * every tab hidden is nothing at all. It keeps what it holds, the width it takes and whether it stands
+   * open, so showing it again gives back the arrangement rather than a default one.
+   *
+   * Hiding the tab the tabbed view shows passes the selection to the first tab still shown, there being
+   * something to show as long as one tab remains. Showing a tab takes the selection from nobody, since a host
+   * that means it to be read activates it.
+   *
+   * This is the answer for a tab that has no business being offered — a properties panel while a simulation
+   * runs, where the model is not being edited. It is not the answer for a tab that is empty for the moment,
+   * which is `setNote`: that keeps the tab where it is and says why it holds nothing.
+   *
+   * @param {string} id
+   * @param {boolean} visible
+   */
+  setTabVisible(id, visible) {
+    const tab = this._tabs.find(t => t.id === id);
+
+    if (!tab) {
+      throw new Error('tab <' + id + '> does not exist');
+    }
+
+    tab.visible = visible !== false;
+    this._applyVisibility(tab);
+
+    if (!tab.visible && this._activeId === id) {
+      const shown = this._tabs.find(t => t.visible);
+      this.activate(shown ? shown.id : null);
+    } else if (tab.visible && this._activeId === null) {
+      this.activate(id);
+    }
+
+    this._renderTabs();
+    this._resized();
+  }
+
+  /**
+   * Open a tab's column, or close it to its resizer, as a double click on that resizer does.
+   *
+   * The panel widens and narrows by exactly that column, and a column closed keeps the width it had, so
+   * opening it again gives that width back. The state belongs to the tab and is kept in the tabbed view,
+   * where it has no effect, so a host may arrange the columns whichever view is shown. What a column is when
+   * it is added is the `open` option of `addTab`.
+   *
+   * @param {string} id
+   * @param {boolean} open
+   */
+  setTabOpen(id, open) {
+    const tab = this._tabs.find(t => t.id === id);
+
+    if (!tab) {
+      throw new Error('tab <' + id + '> does not exist');
+    }
+
+    this._open(tab, open !== false);
+    this._layoutColumns();
+    this._resized();
+  }
+
+  /**
+   * What the panel holds of a tab: the identity and the name it is known by, the element its content stands
+   * in, and what it is as a column. The three states a host may set are the three it may read.
+   *
+   * @param {string} id
+   * @return {{ id: string, label: string, pane: HTMLElement, width: number, open: boolean,
+   *          visible: boolean }|undefined}
+   */
   getTab(id) {
     const tab = this._tabs.find(t => t.id === id);
-    return tab ? { id: tab.id, label: tab.label, pane: tab.pane } : undefined;
+
+    return tab ? {
+      id: tab.id, label: tab.label, pane: tab.pane,
+      width: tab.width, open: tab.open, visible: tab.visible
+    } : undefined;
   }
 
   _renderTabs() {
@@ -381,9 +470,10 @@ export default class SidePanel {
     });
 
     // The selectors select nothing while every tab is a column, and there is nothing to switch between
-    // while there is one tab. The display is set here rather than in the stylesheet because an inline
+    // while there is one tab shown. The display is set here rather than in the stylesheet because an inline
     // display would otherwise beat the rule that hides it.
-    const useless = this._viewMode === 'columns' || this._tabs.length <= 1;
+    const shown = this._tabs.filter(tab => tab.visible);
+    const useless = this._viewMode === 'columns' || shown.length <= 1;
     this._tabBar.style.display = useless ? 'none' : '';
 
     this._layoutColumns();
@@ -410,17 +500,21 @@ export default class SidePanel {
       return;
     }
 
+    // A hidden tab is not in the panel, so it is in none of this arithmetic: neither its column nor its
+    // resizer is drawn, and neither is counted.
+    const shown = this._tabs.filter(tab => tab.visible);
+
     // The panel is exactly its resizers and its open columns, and it is told so rather than left to work
     // it out: what a host puts in the panel's header or its footer would otherwise hold the panel open
     // wider than its columns, and then narrowing a column would move the columns after it. Those slots are
     // clipped to the width the columns decide, which is the whole of the arrangement's arithmetic.
-    const resizers = this._tabs.reduce((sum, tab) => sum + (tab.divider.offsetWidth || 0), 0);
+    const resizers = shown.reduce((sum, tab) => sum + (tab.divider.offsetWidth || 0), 0);
 
-    if (!resizers && this._tabs.length) {
+    if (!resizers && shown.length) {
       return;   // nothing is laid out, so nothing can be measured, as under a test
     }
 
-    const columns = this._tabs.reduce((sum, tab) => sum + (tab.open ? tab.width : 0), 0);
+    const columns = shown.reduce((sum, tab) => sum + (tab.open ? tab.width : 0), 0);
 
     this._parent.style.width = (resizers + columns) + 'px';
   }
@@ -496,6 +590,23 @@ export default class SidePanel {
   _open(tab, open) {
     tab.open = open;
     tab.pane.classList.toggle('bjs-closed', !open);
+  }
+
+  /**
+   * Draw a tab away, or back: its selector, its column and that column's resizer, which is everything of it
+   * either view puts on the screen.
+   *
+   * The three are hidden where they stand rather than taken out of the panel, so that nothing is built or
+   * thrown away and the tab keeps its content and its scroll position, exactly as a change of view does. The
+   * display is set on the elements rather than in the stylesheet for the reason the tab bar's is: what a
+   * view draws a tab with is a rule, and an inline display is what beats a rule.
+   */
+  _applyVisibility(tab) {
+    const display = tab.visible ? '' : 'none';
+
+    tab.button.style.display = display;
+    tab.divider.style.display = display;
+    tab.pane.style.display = display;
   }
 
   _resized() {

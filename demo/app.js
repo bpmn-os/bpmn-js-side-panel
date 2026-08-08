@@ -161,6 +161,10 @@ custom.body.appendChild(createTableEntry({
 
 custom.footer.appendChild(createSimpleEntry({ content: 'Custom footer.' }).element);
 
+// The third of the panel's footer controls, which stands there for the same reason the other two do and is
+// added here because it says something about a tab and the tab has just been made.
+sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: customControls() }).element);
+
 /**
  * The view a panel is shown in: one tab at a time, or every tab a column. The panel draws no control for
  * it, so this is the demo's, and it is put in the panel's footer because it governs the whole panel rather
@@ -226,6 +230,46 @@ function tabControls() {
   });
 
   row.append(name, button);
+  sync();
+
+  return row;
+}
+
+/**
+ * The two things a host says about a tab it did not add itself, shown here on the demo's own tab.
+ *
+ * They are independent: whether the tab is in the panel at all, which both views obey, and whether its
+ * column stands open, which is the column view's. A tab hidden and shown again is the column it was, and a
+ * column closed is its resizer and nothing else, so the two together are every state a tab has.
+ */
+function customControls() {
+  const row = domify('div', 'demo-controls'),
+        name = domify('span', 'demo-controls-name'),
+        visibility = document.createElement('button'),
+        openness = document.createElement('button');
+
+  name.textContent = 'Custom tab';
+  visibility.type = openness.type = 'button';
+
+  const sync = () => {
+    const tab = sidePanel.getTab('custom');
+
+    visibility.textContent = tab.visible ? 'hide' : 'show';
+    openness.textContent = tab.open ? 'close' : 'open';
+    openness.disabled = !tab.visible;
+  };
+
+  visibility.addEventListener('click', () => {
+    sidePanel.setTabVisible('custom', !sidePanel.getTab('custom').visible);
+    sync();
+  });
+
+  openness.addEventListener('click', () => {
+    sidePanel.setTabOpen('custom', !sidePanel.getTab('custom').open);
+    sync();
+  });
+
+  row.append(name, visibility, openness);
   sync();
 
   return row;

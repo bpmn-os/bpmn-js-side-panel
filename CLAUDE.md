@@ -84,6 +84,19 @@ and nothing is built, moved or thrown away, which is what the tests assert by ho
 a change. Every tab states what it is as a column when it is added, through `width` and `open`, and keeps
 it across a change of view.
 
+**A tab has three states a host sets and reads, and they are three because they answer three questions.**
+`open` is whether its column stands open, which the column view obeys and the tabbed view merely records;
+`visible` is whether the tab is in the panel at all, which both views obey; and the active tab is which one
+the tabbed view shows, which is `activate`. The first two are stated at `addTab` by whoever registers the
+tab and changed later by the host through `setTabOpen` and `setTabVisible`, since the module that registers
+a tab knows what that tab wants and only the application knows the whole arrangement. `getTab` returns all
+three, so what may be set may be read. A hidden tab is left where it stands with its selector, its column
+and that column's resizer given an inline `display: none`, which is how the tab bar and a note already do
+it and which is what beats the rules the two views draw a tab with; `_renderTabs` and `_layoutColumns`
+count the shown tabs alone, so the panel's width follows and hiding every tab leaves no panel. Hiding the
+active tab passes the selection to the first tab still shown, and `activate` declines a hidden tab, a tab
+out of the panel not being one the reader can be sent to.
+
 There is one rule and one kind of grip. Each column has a resizer at its left edge, `bjs-tab-divider`;
 dragging it sets that column's width, and the panel's left edge moves by the same amount, since the panel's
 width in this view is written from the columns rather than being a quantity of its own. Everything to the
@@ -108,7 +121,9 @@ clips it rather than reflowing it.
 
 **The demo** (`npm run dev`, `demo/`) is the package shown working: a modeller, the properties panel hosted
 through the `propertiesPanel` seam, and a tab whose entries each say what they are. It runs `src/` directly
-rather than a copy, so it is the thing to look at when a change is visual.
+rather than a copy, so it is the thing to look at when a change is visual. Its three footer controls are
+what a host does rather than what the panel offers: the view it is shown in, a tab added and taken away, and
+the shown and open states of the demo's own tab.
 
 **JS/CSS contract (the key thing to understand):** on `diagram.init`, `_init()` mounts into the
 configured `parent` slot and *stamps two class names* — `.bjs-layout` on the slot's parent (the

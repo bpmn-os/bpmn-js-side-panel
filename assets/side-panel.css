@@ -426,8 +426,13 @@ body.bjs-side-panel-resizing * {
   background-color: var(--bjs-grey-95, hsl(225, 10%, 95%));
 }
 
+/* The panel's own two slots are not columns, so an entry in one does not take a column's measure. They span
+   the panel on one line and hold what governs the whole of it, several things at once where a tab holds one
+   entry under another, and an entry as wide as a column would put the rest of that column between two of
+   them. What does not fit is clipped by the slot, as everything in these two slots is. */
 .bjs-panel-header > .bjs-entry,
 .bjs-panel-footer > .bjs-entry {
+  --bjs-entry-min-width: 0;
   background-color: var(--bjs-grey-97, hsl(225, 10%, 97%));
 }
 

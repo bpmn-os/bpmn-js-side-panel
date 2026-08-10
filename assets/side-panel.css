@@ -301,9 +301,10 @@ body.bjs-side-panel-resizing .bjs-panel.bjs-columns .bjs-tab {
   flex-direction: column;
   flex: 0 0 auto;
   box-sizing: border-box;
-  /* eleven pixels, the two rules included, whatever it carries: the name is set in a size that fits the
-     nine that remain, rather than the strip being widened to fit the name */
-  width: 11px;
+  /* fourteen pixels, the two rules included, whatever it carries: the name is set in a size that fits the
+     twelve that remain, rather than the strip being widened to fit the name. It is what a closed column is
+     reduced to and what carries that column's name, so it is read as easily as the names it stands among */
+  width: 14px;
   cursor: col-resize;
   background-color: #f8f8f8;
   border-left: 1px solid #fff;
@@ -342,16 +343,20 @@ body.bjs-side-panel-resizing .bjs-panel.bjs-columns .bjs-tab {
   /* The stated length is always taken, whatever the name is: a name that took only what it needed would put
      the grips above and below it at a different height on every resizer, and at a new height each time a
      count in a name changed. A short name is centred in it and a long one is cut short. */
-  flex: 0 0 var(--bjs-tab-name-length, 90px);
-  height: var(--bjs-tab-name-length, 90px);
+  flex: 0 0 var(--bjs-tab-name-length, 120px);
+  height: var(--bjs-tab-name-length, 120px);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
-  font-size: 10px;
-  line-height: 10px;
+  /* The line box of a name read upward is the thickness of the strip's field, so the size and the strip's
+     width move together. The margin is what stands between the name and the two grips, and is the name's
+     own, so lengthening the box does not close it. */
+  font-size: 12px;
+  line-height: 12px;
+  margin: 6px 0;
   color: var(--bjs-grey-35, hsl(225, 10%, 35%));
 }
 

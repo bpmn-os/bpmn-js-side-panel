@@ -122,10 +122,13 @@ same state; dragging the resizer of a closed column pulls it open again. Closing
 panel as its resizers and nothing else, which is how a reader puts the whole panel away; hiding every tab
 leaves no panel at all, which is the host's to do and not the reader's.
 
-A resizer carries its column's name, read upward between the two halves of its grip. The name takes a
-stated length, `--bjs-tab-name-length`, rather than one measured from the longest name, so that a name
-saying how much its tab holds — `Tokens (5)` one moment and `Tokens (214)` the next — moves no grip when it
-changes; a longer name is cut short. `setTabLabel(id, label)` renames a tab in both views at once.
+A resizer carries its column's name, read upward between the two halves of its grip. The strip is fourteen
+pixels including its two rules and the name is set in the twelve that remain, the name being set to the strip
+rather than the strip widened to the name; a closed column is reduced to that strip, so its name is what a
+reader has of it and is read as easily as the names it stands among. The name takes a stated length,
+`--bjs-tab-name-length`, rather than one measured from the longest name, so that a name saying how much its
+tab holds — `Tokens (5)` one moment and `Tokens (214)` the next — moves no grip when it changes; a longer
+name is cut short. `setTabLabel(id, label)` renames a tab in both views at once.
 
 A tab's band names the tab, in a heading carrying `bjs-tab-name`, above whatever governs what the tab
 lists, so that the head of a tab reads as a header rather than as a strip of controls. A tab fed from a file

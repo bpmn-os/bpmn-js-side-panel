@@ -638,7 +638,7 @@ export default class SidePanel {
       }
     };
 
-    // Collapsed and back again, since dragging an eleven-pixel strip is possible but unkind and the reader
+    // Collapsed and back again, since dragging a strip of a dozen pixels is possible but unkind and the reader
     // should not have to remember a width. The width it had is what it returns to.
     divider.addEventListener('dblclick', () => {
       const width = this._parent.getBoundingClientRect().width;

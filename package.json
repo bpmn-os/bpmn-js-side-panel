@@ -1,6 +1,6 @@
 {
   "name": "bpmn-js-side-panel",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A resizable, tabbed side panel for bpmn-js / diagram-js. Hosts the properties panel when present, plus any number of custom tabs.",
   "main": "src/index.js",
   "module": "src/index.js",

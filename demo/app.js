@@ -71,11 +71,20 @@ modeler.get('canvas').zoom('fit-viewport');
 const sidePanel = modeler.get('sidePanel');
 
 // The panel's own footer, spanning it below everything and standing whichever tab is shown. It is where
-// what governs the whole panel belongs, since a tab is shown one at a time and this is not. Both of the
-// controls here are the host's own: the panel offers neither, the view being the host's to choose and a
-// tab being the host's to add.
-sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: viewControls() }).element);
-sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: tabControls() }).element);
+// what governs the whole panel belongs, since a tab is shown one at a time and this is not. Every control
+// here is the host's own: the panel offers none of them, the view being the host's to choose and a tab
+// being the host's to add.
+//
+// They stand one under another rather than side by side, each a name and the buttons that answer it, and
+// the footer is given the height that takes. A slot is as tall as its host says through
+// `--bjs-panel-slot-height`, which is read on the slot itself, so the footer grows and the header stays the
+// one line it holds.
+const footerControls = domify('div', 'demo-footer');
+
+sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: footerControls }).element);
+
+footerControls.appendChild(viewControls());
+footerControls.appendChild(tabControls());
 
 const custom = sidePanel.addTab({ id: 'custom', label: 'Custom' });
 
@@ -163,7 +172,7 @@ custom.footer.appendChild(createSimpleEntry({ content: 'Custom footer.' }).eleme
 
 // The third of the panel's footer controls, which stands there for the same reason the other two do and is
 // added here because it says something about a tab and the tab has just been made.
-sidePanel.getSlots().footer.appendChild(createSimpleEntry({ content: customControls() }).element);
+footerControls.appendChild(customControls());
 
 /**
  * The view a panel is shown in: one tab at a time, or every tab a column. The panel draws no control for

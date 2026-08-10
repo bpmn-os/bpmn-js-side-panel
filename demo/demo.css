@@ -35,15 +35,36 @@ body {
 }
 
 /* The controls the host puts in the panel's footer: the view a panel is shown in is the host's to choose,
-   the package drawing no control for it, and a tab added while the panel is up is the host's to add. Both
-   are the demo's own appearance and neither belongs to the package. */
+   the package drawing no control for it, and a tab added or taken away while the panel is up is the host's
+   to add. All of this is the demo's own appearance and none of it belongs to the package.
+
+   They stand one under another, three lines of a name and the buttons that answer it, rather than in a row
+   where they would read as one string of buttons and be cramped at any width the panel is likely to have.
+   The footer is given the height that takes: a slot is as tall as `--bjs-panel-slot-height` says, and the
+   variable is read on the slot, so setting it here raises the footer and leaves the header at its one line. */
+.bjs-panel-footer {
+  --bjs-panel-slot-height: 108px;
+}
+
+.demo-footer {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
 .demo-controls {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
+/* The names are a column of their own, so the buttons of the three lines begin at one place and the footer
+   reads as a small form rather than as three sentences of different lengths. */
 .demo-controls-name {
+  flex: 0 0 auto;
+  min-width: 76px;
   color: var(--bjs-grey-55);
 }
 

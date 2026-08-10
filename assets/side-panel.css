@@ -862,6 +862,19 @@ body.bjs-side-panel-resizing * {
   background: var(--bjs-grey-90, hsl(225, 10%, 90%));
 }
 
+/* A table the reader may read but not change: every control that would change it is greyed and answers
+   nothing, and the cells keep their look, a frozen table being the same table rather than a disabled one.
+   Saving stands unchanged, reading the rows out being no change. */
+.bjs-table-entry button:disabled {
+  color: var(--bjs-grey-75, hsl(225, 10%, 75%));
+  cursor: default;
+}
+
+.bjs-table-entry button:disabled:hover {
+  color: var(--bjs-grey-75, hsl(225, 10%, 75%));
+  background: none;
+}
+
 /* footer row: add-row (plus) on the left, a right-aligned actions slot (e.g. download) */
 .bjs-table-footer {
   display: flex;

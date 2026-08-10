@@ -252,10 +252,13 @@ A grid of editable text cells with add and delete controls. Rows are always arra
 | `deletable` | `boolean` | `true` | show delete controls |
 | `savable` | `boolean` | `true` | show the control that saves the rows as a CSV |
 | `loadable` | `boolean` | `true` | show the control that replaces the rows from a CSV |
+| `clearable` | `boolean` | `false` | show the control that empties the table of its rows |
+| `readOnly` | `boolean` | `false` | the table is read but not changed (see `setReadOnly`) |
 | `filename` | `string` | `'table.csv'` | what a save writes to, and what both controls name |
 | `separator` | `string` | `';'` | what divides one cell from the next in that CSV |
 | `onError` | `function` | undefined | called with a message when a loaded file names other columns |
 | `onLoad` | `function` | undefined | called with the file name when a file has been read into the table |
+| `onClear` | `function` | undefined | called when the clear control has emptied the table |
 
 ### Return value
 
@@ -268,6 +271,7 @@ A grid of editable text cells with add and delete controls. Rows are always arra
   getCsv: function(),             // the rows as CSV, the column labels first
   setCsv: function(text),         // replace the rows from CSV; false if its header names other columns
   addRow: function(values?, focusFirst?),  // append a row, optionally focusing the first cell
+  setReadOnly: function(on),      // whether the table is the reader's to change
   destroy: function()
 }
 ```
@@ -297,6 +301,30 @@ controls, for a host that keeps the text somewhere of its own.
 
 Pass `savable: false` or `loadable: false` where a table is not a file, and use `footerEl` for a
 control of the host's own, which stands left of the table's.
+
+Pass `clearable: true` where a table may be emptied whole. The control is a trash, the glyph a row's own
+delete carries, removing a row and removing them all being one thing at two scales, and it stands left of
+the load control, the two being the same act at either end: one puts a file's rows in the table and the
+other leaves it with none. It empties the table down to `minRows`, where a row's delete stops, announces
+the new rows through `onChange` as any other change is announced, and tells `onClear` that the emptying
+was the reader's doing, which a host showing which file the table was read from needs to know.
+
+### A table read but not changed
+
+`readOnly`, and `setReadOnly` on the handle, say whether the table is the reader's to change. A host turns
+it over while the table stands: a table stating what something was given is read while that thing is under
+way and editable again once it is over.
+
+What is refused is what a reader does — typing in a cell, adding a row, deleting one, emptying the table,
+reading a file into it. What the program does is untouched: `setRows`, `setCsv` and `addRow` go on working,
+the flag being about the reader, and the flag is read whenever a cell is built, so rows arriving later are
+frozen with the rest.
+
+A frozen cell is `readOnly` and not `disabled`, so it keeps its focus, its selection, its copying and the
+arrow-key navigation and refuses only the edit: a table nobody may change is still one that can be read and
+quoted from. The controls are greyed rather than removed, so that a table freezes rather than changes width,
+and because a freeze says not at the moment where `addable: false` says never. Saving is not among them,
+reading the rows out being no change, and a table one may not edit is one whose rows are worth taking away.
 
 ## The icons
 

@@ -44,9 +44,12 @@
  * @param {boolean} [options.deletable=true]  render the beside-table delete column
  * @param {boolean} [options.savable=true]  render the save control, writing the rows as a CSV
  * @param {boolean} [options.loadable=true]  render the load control, replacing the rows from a CSV
+ * @param {boolean} [options.clearable=false]  render the clear control, emptying the table of its rows
+ * @param {boolean} [options.readOnly=false]  the table is read but not changed (see `setReadOnly`)
  * @param {string} [options.filename='table.csv']  what a save writes to, and what both controls name
  * @param {string} [options.separator=';']  what divides one cell from the next in that CSV
  * @param {Function} [options.onLoad]  (filename) => void — a file read into the table, named
+ * @param {Function} [options.onClear]  () => void — the table emptied of its rows by the clear control
  * @param {Function} [options.onError]  (message) => void — a file refused for naming other columns
  *
  * @return {{
@@ -57,6 +60,7 @@
  *   getCsv: (function(): string),
  *   setCsv: (function(string): boolean),
  *   addRow: (function((Array<string>|null)=, boolean=): HTMLTableRowElement),
+ *   setReadOnly: (function(boolean): void),
  *   destroy: (function(): void)
  * }}
  */
@@ -72,11 +76,22 @@ export default function createTableEntry(options = {}) {
     deletable = true,
     savable = true,
     loadable = true,
+    clearable = false,
+    readOnly = false,
     filename = 'table.csv',
     onLoad,
+    onClear,
     separator = ';',
     onError
   } = options;
+
+  // Whether the table is the reader's to change. It is read wherever a cell or a control is built, so rows
+  // arriving later through `setRows` or `setCsv` are frozen with the rest.
+  let frozen = !!readOnly;
+
+  // The controls a freeze greys: everything that changes the table. Saving is not among them, reading the
+  // rows out being no change, and a table one may not edit is one whose rows are worth taking away.
+  const editControls = [];
 
   // columns may be plain strings or { label, width } objects — normalise to objects
   const cols = columns.map(c => (typeof c === 'string' ? { label: c } : c));
@@ -167,6 +182,10 @@ export default function createTableEntry(options = {}) {
       input.type = 'text';
       input.setAttribute('data-col', String(c));
       input.value = values && values[c] != null ? String(values[c]) : '';
+      // readOnly and not disabled: a frozen cell keeps its focus, its selection, its copying and the
+      // arrow-key navigation, and refuses only the edit, so a table nobody may change is still one that can
+      // be read and quoted from
+      input.readOnly = frozen;
       td.appendChild(input);
       tr.appendChild(td);
     }
@@ -190,6 +209,7 @@ export default function createTableEntry(options = {}) {
       del.tabIndex = -1;
       del.title = 'Delete row';
       del.innerHTML = DELETE_ICON;
+      del.disabled = frozen;
       del.addEventListener('click', () => removeRow(tr));
       cell.appendChild(del);
       actionsBody.appendChild(cell);
@@ -269,7 +289,7 @@ export default function createTableEntry(options = {}) {
     case 'ArrowLeft': if (atStart) { target = cellAt(r, c - 1) || (r > 0 ? cellAt(r - 1, ncols - 1) : null); } break;
     case 'Enter':
       target = cellAt(r + 1, c);
-      if (!target && addable) {
+      if (!target && addable && !frozen) {
         addRow(null, false);
         target = cellAt(r + 1, c);
       }
@@ -324,6 +344,8 @@ export default function createTableEntry(options = {}) {
     addBtn.title = addLabel; // label lives in the tooltip; the button is icon-only (properties-panel style)
     addBtn.innerHTML = CREATE_ICON;
     addBtn.addEventListener('click', () => addRow(null, true));
+    addBtn.disabled = frozen;
+    editControls.push(addBtn);
     footer.appendChild(addBtn);
   } else {
     footer.appendChild(el('span', ''));
@@ -333,7 +355,7 @@ export default function createTableEntry(options = {}) {
   const footerEl = el('div', 'bjs-table-footer-slot');
   actions.appendChild(footerEl);
 
-  const control = (icon, title, onClick) => {
+  const control = (icon, title, onClick, edits) => {
     const button = el('button', '');
 
     button.type = 'button';
@@ -342,7 +364,29 @@ export default function createTableEntry(options = {}) {
     button.innerHTML = icon;
     button.addEventListener('click', onClick);
     actions.appendChild(button);
+
+    if (edits) {
+      button.disabled = frozen;
+      editControls.push(button);
+    }
+
+    return button;
   };
+
+  // Emptying the table stands left of reading a file into it, the two being the same act at either end: one
+  // puts a file's rows in the table and the other leaves the table with none. It is the panel's own trash,
+  // the glyph a row's delete carries, since removing a row and removing them all are one thing at two scales.
+  if (clearable) {
+    control(DELETE_ICON, 'Clear ' + filename, () => {
+      // emptied down to what the table must always hold, which is where a row's own delete stops
+      setRows(Array.from({ length: minRows }, () => []));
+      fire();
+
+      if (typeof onClear === 'function') {
+        onClear();
+      }
+    }, true);
+  }
 
   if (loadable) {
     const file = el('input', '');
@@ -373,7 +417,7 @@ export default function createTableEntry(options = {}) {
       file.value = '';   // so that choosing the same file again is a change
     });
     actions.appendChild(file);
-    control(LOAD_ICON, 'Load ' + filename, () => file.click());
+    control(LOAD_ICON, 'Load ' + filename, () => file.click(), true);
   }
 
   if (savable) {
@@ -390,11 +434,35 @@ export default function createTableEntry(options = {}) {
   footer.appendChild(actions);
   element.appendChild(footer);
 
+  /**
+   * Whether the table is the reader's to change, which a host turns over while the table stands: a table
+   * stating what something was given is read while that thing is under way and editable again once it is
+   * over. What is refused is what a reader does — typing in a cell, adding a row, deleting one, emptying the
+   * table, reading a file into it — and not what the program does: `setRows`, `setCsv` and `addRow` go on
+   * working, the flag being about the reader.
+   *
+   * The controls are greyed rather than removed, so that a table freezes rather than changes width, and
+   * because a freeze says not at the moment where `addable: false` says never.
+   */
+  function setReadOnly(on) {
+    frozen = !!on;
+
+    element.classList.toggle('bjs-table-readonly', frozen);
+    Array.from(element.querySelectorAll('.bjs-table-cell')).forEach((cell) => {
+      cell.readOnly = frozen;
+    });
+    editControls.concat(Array.from(element.querySelectorAll('.bjs-table-delete'))).forEach((button) => {
+      button.disabled = frozen;
+    });
+  }
+
+  setReadOnly(frozen);
+
   function destroy() {
     element.remove();
   }
 
-  return { element, footerEl, getRows, setRows, getCsv, setCsv, addRow, destroy };
+  return { element, footerEl, getRows, setRows, getCsv, setCsv, addRow, setReadOnly, destroy };
 }
 
 // The exact icons @bpmn-io/properties-panel uses for its list add / remove controls, so a hosted table

@@ -118,7 +118,9 @@ since a resizer follows the pointer and the pointer cannot leave the window.
 A double click on a resizer closes its column and opens it again at the width it had, growing and shrinking
 into place rather than jumping, and `prefers-reduced-motion` is honoured. Dragging a column to nothing
 closes it in the same way and remembers the width it had when the drag began, so the two gestures leave the
-same state; dragging the resizer of a closed column pulls it open again. Closing every column leaves the
+same state; dragging the resizer of a closed column pulls it open again. A column whose remembered width is
+twenty pixels or less is opened at the default width instead, since such a width shows a sliver of the
+column and nothing a reader could work in, and a gesture that opens a column is expected to yield one. Closing every column leaves the
 panel as its resizers and nothing else, which is how a reader puts the whole panel away; hiding every tab
 leaves no panel at all, which is the host's to do and not the reader's.
 

@@ -267,3 +267,35 @@ test('a tab may be added and taken away in either view', () => {
   assert.equal(sidePanel.getTab('extra'), undefined);
   assert.equal(sidePanel.getViewMode(), 'columns', 'and the view is what it was');
 });
+
+test('a column with no width worth opening to opens to the default', () => {
+  const { document, sidePanel } = panel({ viewMode: 'columns' });
+
+  sidePanel.addTab({ id: 'wide', label: 'Wide', width: 320 });
+  sidePanel.addTab({ id: 'sliver', label: 'Sliver', width: 8 });
+  sidePanel.addTab({ id: 'narrow', label: 'Narrow', width: 21 });
+
+  const dblclick = (id) => document.querySelector('.bjs-tab-divider[data-tab="' + id + '"]')
+    .dispatchEvent(new document.defaultView.Event('dblclick'));
+
+  const width = (id) => sidePanel.getTab(id).width,
+        open = (id) => sidePanel.getTab(id).open;
+
+  dblclick('wide');
+  assert.equal(open('wide'), false, 'a double click puts the column away');
+  dblclick('wide');
+  assert.deepEqual([ open('wide'), width('wide') ], [ true, 320 ],
+    'and brings it back at the width it had');
+
+  // a column dragged almost shut and then put away holds a width that would open onto nothing
+  dblclick('sliver');
+  assert.equal(open('sliver'), false);
+  dblclick('sliver');
+  assert.deepEqual([ open('sliver'), width('sliver') ], [ true, 260 ],
+    'so it is opened to the default instead');
+
+  // and one that is narrow but readable is the reader's to keep
+  dblclick('narrow');
+  dblclick('narrow');
+  assert.deepEqual([ open('narrow'), width('narrow') ], [ true, 21 ]);
+});

@@ -8,6 +8,11 @@
  */
 const DEFAULT_COLUMN_WIDTH = 260;
 
+// The narrowest column worth opening to. A column below this shows a sliver of its content and nothing a
+// reader could work in, so a width under it is treated as no width at all: what is remembered of a column
+// dragged almost shut is not worth giving back, and the default is given instead.
+const MIN_OPEN_WIDTH = 20;
+
 /**
  * A resizable, tabbed side panel.
  *
@@ -579,7 +584,15 @@ export default class SidePanel {
     // what says the column is there and what opens it again; there is no other way to put a column away and
     // none is wanted, since a panel with every column closed is its resizers and nothing else.
     tab.divider.addEventListener('dblclick', () => {
-      this._open(tab, !tab.open);
+      const opening = !tab.open;
+
+      // A column dragged almost shut and then put away has a width that would open onto nothing. It is
+      // opened to the default instead, so that opening a column always yields a column to read.
+      if (opening && !(tab.width > MIN_OPEN_WIDTH)) {
+        tab.width = DEFAULT_COLUMN_WIDTH;
+      }
+
+      this._open(tab, opening);
       this._layoutColumns();
       this._resized();
     });
